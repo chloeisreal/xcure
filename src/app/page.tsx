@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef } from "react";
-import Image from "next/image";
 import SearchForm from "@/components/SearchForm";
 import AnalysisReport from "@/components/AnalysisReport";
 
@@ -13,10 +12,7 @@ export default function Home() {
   const abortRef = useRef<AbortController | null>(null);
 
   async function handleAnalyze(query: string) {
-    // Cancel any in-flight request
-    if (abortRef.current) {
-      abortRef.current.abort();
-    }
+    if (abortRef.current) abortRef.current.abort();
     const controller = new AbortController();
     abortRef.current = controller;
 
@@ -44,8 +40,7 @@ export default function Home() {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        setStreamedText((prev) => prev + chunk);
+        setStreamedText((prev) => prev + decoder.decode(value, { stream: true }));
       }
     } catch (err: unknown) {
       if (err instanceof Error && err.name === "AbortError") return;
@@ -58,26 +53,13 @@ export default function Home() {
   const hasReport = streamedText.length > 0 || isStreaming;
 
   return (
-    <main className="min-h-screen flex flex-col">
-      {/* Hero */}
-      <header className="border-b border-slate-800 bg-[#0d1425]">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center gap-3">
-          <Image
-            src="/logo.png"
-            alt="XCure"
-            width={48}
-            height={48}
-            className="rounded-lg object-contain"
-            priority
-          />
-          <p className="text-xs text-slate-400">Biotech AI Investment Research</p>
-        </div>
-      </header>
-
+    <main className="flex flex-col" style={{ minHeight: "calc(100vh - 57px)" }}>
       {/* Search area */}
       <section
         className={`transition-all duration-500 ${
-          hasReport ? "py-6 border-b border-slate-800 bg-[#0d1425]/60" : "flex-1 flex items-center py-20"
+          hasReport
+            ? "py-6 border-b border-slate-800 bg-[#0d1425]/60"
+            : "flex-1 flex items-center py-20"
         }`}
       >
         <div className="max-w-6xl mx-auto px-4 flex flex-col items-center gap-6 w-full">
@@ -94,9 +76,7 @@ export default function Home() {
           )}
           <SearchForm onSubmit={handleAnalyze} isLoading={isStreaming} />
           {!hasReport && (
-            <p className="text-xs text-slate-600">
-              e.g. BioNTech, CURE, Moderna, GenomicDAO
-            </p>
+            <p className="text-xs text-slate-600">e.g. BioNTech, CURE, Moderna, GenomicDAO</p>
           )}
         </div>
       </section>
@@ -107,8 +87,7 @@ export default function Home() {
           {currentQuery && (
             <div className="mb-6">
               <h2 className="text-xl font-semibold text-white">
-                Analysis:{" "}
-                <span className="text-blue-400">{currentQuery}</span>
+                Analysis: <span className="text-blue-400">{currentQuery}</span>
               </h2>
               {isStreaming && (
                 <p className="text-sm text-slate-500 mt-1">Generating report…</p>
@@ -126,7 +105,7 @@ export default function Home() {
       )}
 
       {/* Footer */}
-      <footer className="border-t border-slate-800 py-4">
+      <footer className="border-t border-slate-800 py-4 mt-auto">
         <div className="max-w-6xl mx-auto px-4 text-center text-xs text-slate-600">
           XCure — Not financial advice. Research purposes only.
         </div>
