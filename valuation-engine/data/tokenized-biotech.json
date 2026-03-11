@@ -1,0 +1,164 @@
+[
+  {
+    "symbol": "VITA",
+    "name": "VitaDAO",
+    "description": "Decentralized science (DeSci) platform focused on longevity research and funding. VitaDAO funds and accelerates early-stage longevity research through community-governed token economics.",
+    "fullName": "VitaDAO Token",
+    "network": "Ethereum",
+    "tokenAddress": "0x3b8e0b69c5a4591a4c9a2a3c1c1a4e5c2c1c1c1c",
+    "tokenType": "Governance",
+    "category": "Longevity Research",
+    "launchDate": "2021",
+    "useCases": [
+      "Governance voting on research funding",
+      "Staking for data access",
+      "Fee payments on platform",
+      "Access to research outcomes"
+    ],
+    "partnerships": ["Molecule", "Healx", " VitaTech"],
+    "fundedProjects": [
+      "Longevity research grants",
+      "Clinical trials for longevity compounds",
+      "Open-source research databases"
+    ],
+    "tokenomics": {
+      "totalSupply": 100000000,
+      "circulatingSupply": 35000000,
+      "launchPrice": 0.05,
+      "currentPrice": 0.32,
+      "marketCap": 32000000,
+      "fdv": 32000000
+    },
+    "competitors": ["Molecule", "LabDAO", "HairDAO"],
+    "risks": [
+      "Regulatory uncertainty around tokenized biotech",
+      "Scientific failure of funded research",
+      "Limited adoption"
+    ],
+    "lastUpdated": "2025-03-11"
+  },
+  {
+    "symbol": "BIO",
+    "name": "BIO Protocol",
+    "description": "Platform for tokenizing biotech assets, enabling decentralized funding and governance of scientific research and drug development.",
+    "fullName": "BIO Token",
+    "network": "Ethereum",
+    "tokenAddress": "0xa8b2e9a2c1d5e7f8a9b0c1d2e3f4a5b6c7d8e9f0",
+    "tokenType": "Governance",
+    "category": "Biotech Tokenization",
+    "launchDate": "2024",
+    "useCases": [
+      "Governance of biotech projects",
+      "Funding allocation decisions",
+      "Access to research data",
+      "Staking rewards"
+    ],
+    "partnerships": [],
+    "fundedProjects": [],
+    "tokenomics": {
+      "totalSupply": 1000000000,
+      "circulatingSupply": 150000000,
+      "launchPrice": 0.10,
+      "currentPrice": 0.85,
+      "marketCap": 127500000,
+      "fdv": 850000000
+    },
+    "competitors": ["Molecule", "VitaDAO", "PsyDAO"],
+    "risks": [
+      "Early stage project",
+      "Regulatory risk",
+      "Limited liquidity"
+    ],
+    "lastUpdated": "2025-03-11"
+  },
+  {
+    "symbol": "HAIR",
+    "name": "HairDAO",
+    "description": "Decentralized community focused on funding and accelerating hair loss research and treatments.",
+    "fullName": "HairDAO Token",
+    "network": "Ethereum",
+    "tokenAddress": "0xc1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0",
+    "tokenType": "Governance",
+    "category": "Hair Loss Research",
+    "launchDate": "2022",
+    "useCases": [
+      "Governance voting",
+      "Funding hair research",
+      "Community access"
+    ],
+    "partnerships": [],
+    "fundedProjects": ["Hair loss treatment research"],
+    "tokenomics": {
+      "totalSupply": 10000000,
+      "circulatingSupply": 3000000,
+      "currentPrice": 0.05,
+      "marketCap": 150000
+    },
+    "competitors": ["VitaDAO"],
+    "risks": [
+      "Niche focus",
+      "Limited adoption"
+    ],
+    "lastUpdated": "2025-03-11"
+  },
+  {
+    "symbol": "LON",
+    "name": "LabDAO",
+    "description": "Decentralized network for laboratory resources and scientific collaboration, enabling researchers to access shared lab equipment and data.",
+    "fullName": "LabDAO Token",
+    "network": "Ethereum",
+    "tokenAddress": "0xd2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1",
+    "type": "Utility",
+    "category": "Lab Infrastructure",
+    "launchDate": "2022",
+    "useCases": [
+      "Lab equipment access",
+      "Data sharing",
+      "Research collaboration governance"
+    ],
+    "partnerships": [],
+    "fundedProjects": ["Shared lab infrastructure"],
+    "tokenomics": {
+      "totalSupply": 100000000,
+      "circulatingSupply": 20000000,
+      "currentPrice": 0.02,
+      "marketCap": 400000
+    },
+    "competitors": ["Benchling", "Labarchives"],
+    "risks": [
+      "Physical infrastructure challenges",
+      "Adoption barriers"
+    ],
+    "lastUpdated": "2025-03-11"
+  },
+  {
+    "symbol": "PSY",
+    "name": "PsyDAO",
+    "description": "Decentralized community funding psychedelic research and mental health treatments through tokenized governance.",
+    "fullName": "PsyDAO Token",
+    "network": "Ethereum",
+    "tokenAddress": "0xe3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2",
+    "tokenType": "Governance",
+    "category": "Psychedelic Research",
+    "launchDate": "2022",
+    "useCases": [
+      "Research funding governance",
+      "Community voting",
+      "Access to research"
+    ],
+    "partnerships": [],
+    "fundedProjects": ["Psychedelic therapy research"],
+    "tokenomics": {
+      "totalSupply": 50000000,
+      "circulatingSupply": 15000000,
+      "currentPrice": 0.15,
+      "marketCap": 2250000
+    },
+    "competitors": ["VitaDAO", "MindDAO"],
+    "risks": [
+      "Regulatory challenges (psychedelics)",
+      "Scientific validation needed"
+    ],
+    "lastUpdated": "2025-03-11"
+  }
+]

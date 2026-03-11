@@ -1,0 +1,214 @@
+[
+  {
+    "id": "sh-cell-therapy-group",
+    "name": "上海细胞治疗集团股份有限公司",
+    "nameEn": "Shanghai Cell Therapy Group",
+    "hkexCode": "",
+    "exchange": "HKEX",
+    "listingType": "18A",
+    "sector": "生物科技",
+    "subsector": "细胞治疗",
+    "filingDate": "2024-04-30",
+    "status": "Pending",
+    "prospectus": {
+      "description": "中国首家且唯一覆盖细胞医疗健康全价值链的公司，业务覆盖细胞储存、肿瘤医疗、细胞药物及细胞充能。核心产品BZDS1901是全球首款聚焦实体瘤治疗的抗PD-1纳米抗体装甲化CAR-T细胞药物，已获FDA恶性间皮瘤孤儿药认证。",
+      "pipeline": [
+        {
+          "product": "BZDS1901",
+          "indication": "实体瘤",
+          "stage": "临床I/II期",
+          "note": "全球首款聚焦实体瘤CAR-T，已获FDA孤儿药认证"
+        }
+      ],
+      "lastFinancing": {
+        "round": "IPO前",
+        "amount": "数亿元",
+        "valuation": "数十亿元",
+        "date": "2024"
+      },
+      "useOfProceeds": [
+        "研发投入",
+        "业务扩张",
+        "营运资金"
+      ]
+    },
+    "risks": [
+      "CAR-T疗法竞争激烈",
+      "监管审批不确定性",
+      "商业化挑战"
+    ],
+    "lastUpdated": "2025-03-11"
+  },
+  {
+    "id": "hua-peptide-bio",
+    "name": "华芢生物科技（青岛）股份有限公司",
+    "nameEn": "Huapeptide Biotechnology (Qingdao)",
+    "hkexCode": "",
+    "exchange": "HKEX",
+    "listingType": "普通上市",
+    "sector": "生物科技",
+    "subsector": "蛋白质药物",
+    "filingDate": "2024-04-29",
+    "status": "Pending",
+    "prospectus": {
+      "description": "重点关注伤口愈合的多功能疗法，主攻蛋白质药物研发，重点开发血小板衍生生长因子(PDGF)相关药物，用于治疗糖尿病足溃疡等难愈合伤口。",
+      "pipeline": [
+        {
+          "product": "核心产品",
+          "indication": "伤口愈合",
+          "stage": "临床阶段",
+          "note": "PDGF蛋白质药物"
+        }
+      ],
+      "lastFinancing": {
+        "round": "IPO前",
+        "amount": "未披露",
+        "valuation": "未披露",
+        "date": "2024"
+      },
+      "useOfProceeds": [
+        "临床试验",
+        "研发",
+        "生产设施"
+      ]
+    },
+    "risks": [
+      "临床试验不确定性",
+      "市场竞争",
+      "集采降价压力"
+    ],
+    "lastUpdated": "2025-03-11"
+  },
+  {
+    "id": "insilico-medicine",
+    "name": "英矽智能科技有限公司",
+    "nameEn": "Insilico Medicine",
+    "hkexCode": "",
+    "exchange": "HKEX",
+    "listingType": "18A",
+    "sector": "生物科技",
+    "subsector": "AI药物研发",
+    "filingDate": "2024-11",
+    "status": "Pending",
+    "prospectus": {
+      "description": "利用AI技术进行药物发现，从靶点识别到确定临床前候选药物平均仅需12-18个月，远快于传统的4.5年。拥有AI药物研发平台Pharma.AI，已将AI设计的药物推进到临床II期。",
+      "pipeline": [
+        {
+          "product": "ISM001-055",
+          "indication": "特发性肺纤维化",
+          "stage": "临床II期",
+          "note": "AI设计的小分子药物"
+        },
+        {
+          "product": "ISM3091",
+          "indication": "肿瘤",
+          "stage": "临床I期",
+          "note": "AI设计的DDR1抑制剂"
+        }
+      ],
+      "lastFinancing": {
+        "round": "D轮",
+        "amount": "约6000万美元",
+        "valuation": "约10亿美元",
+        "date": "2024"
+      },
+      "useOfProceeds": [
+        "临床开发",
+        "AI平台升级",
+        "营运资金"
+      ]
+    },
+    "risks": [
+      "AI药物研发不确定性",
+      "临床试验失败风险",
+      "持续亏损"
+    ],
+    "lastUpdated": "2025-03-11"
+  },
+  {
+    "id": "junsai-bio",
+    "name": "上海君赛生物股份有限公司",
+    "nameEn": "Junzai Biotechnology (Shanghai)",
+    "hkexCode": "",
+    "exchange": "HKEX",
+    "listingType": "18A",
+    "sector": "生物科技",
+    "subsector": "细胞疗法/TIL",
+    "filingDate": "2024-12",
+    "status": "Pending",
+    "prospectus": {
+      "description": "致力于实体瘤创新细胞疗法，核心产品GC101是全球首款无需高强度清淋化疗的TIL细胞药物，有望成为国内首个获批的TIL疗法。已完成的临床试验显示良好安全性和疗效。",
+      "pipeline": [
+        {
+          "product": "GC101",
+          "indication": "黑色素瘤/非小细胞肺癌",
+          "stage": "临床II期",
+          "note": "关键临床试验，有望成为国内首个获批TIL"
+        },
+        {
+          "product": "GC203",
+          "indication": "多种实体瘤",
+          "stage": "临床I期",
+          "note": "TIL细胞疗法"
+        }
+      ],
+      "lastFinancing": {
+        "round": "C轮",
+        "amount": "1.37亿元",
+        "valuation": "21.37亿元人民币",
+        "date": "2025-11"
+      },
+      "useOfProceeds": [
+        "临床试验",
+        "研发",
+        "商业化准备"
+      ]
+    },
+    "risks": [
+      "TIL疗法竞争激烈",
+      "临床试验不确定性",
+      "商业化能力待验证"
+    ],
+    "lastUpdated": "2025-03-11"
+  },
+  {
+    "id": "nebridge-bio",
+    "name": "新桥生物科技有限公司",
+    "nameEn": "New Bridge Bio",
+    "hkexCode": "",
+    "exchange": "HKEX",
+    "listingType": "18A",
+    "sector": "生物科技",
+    "subsector": "肿瘤免疫",
+    "filingDate": "2024-10",
+    "status": "Pending",
+    "prospectus": {
+      "description": "聚焦精准免疫肿瘤药物，核心产品givastomig是CLDN18.2×4-1BB双特异性抗体，瞄准胃食管腺癌、胆道癌等实体瘤市场。该领域2024年全球一线治疗市场规模已达151亿美元，预计2034年将增至223亿美元。",
+      "pipeline": [
+        {
+          "product": "givastomig",
+          "indication": "胃食管腺癌/胆道癌",
+          "stage": "临床阶段",
+          "note": "CLDN18.2×4-1BB双特异性抗体"
+        }
+      ],
+      "lastFinancing": {
+        "round": "B轮",
+        "amount": "未披露",
+        "valuation": "未披露",
+        "date": "2024"
+      },
+      "useOfProceeds": [
+        "临床开发",
+        "研发",
+        "营运资金"
+      ]
+    },
+    "risks": [
+      "双特异性抗体竞争激烈",
+      "临床试验风险",
+      "市场渗透挑战"
+    ],
+    "lastUpdated": "2025-03-11"
+  }
+]
