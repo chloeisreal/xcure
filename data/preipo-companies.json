@@ -1,0 +1,199 @@
+[
+  {
+    "id": "roivant-sci",
+    "name": "Roivant Sciences",
+    "description": "Technology-based drug discovery and development platform with a portfolio of 'Vants' (subsidiaries) focused on different therapeutic areas.",
+    "founded": 2014,
+    "headquarters": "Basel, Switzerland",
+    "website": "https://roivant.com",
+    "sector": "Biotechnology",
+    "subsector": "Drug Discovery Platform",
+    "lastFunding": {
+      "round": "Series D",
+      "amount": 450000000,
+      "currency": "USD",
+      "date": "2024-03",
+      "valuation": 7000000000,
+      "investors": ["SoftBank Vision Fund", "Viking Global", "RTW Investments"]
+    },
+    "pipeline": [
+      {
+        "drug": "Lorecivivint",
+        "indication": "Osteoarthritis",
+        "phase": "Phase III",
+        "sponsor": "Biosplice Therapeutics"
+      },
+      {
+        "drug": "Axalimotide",
+        "indication": "Advanced Solid Tumors",
+        "phase": "Phase II",
+        "sponsor": "NextCure"
+      }
+    ],
+    "competitors": ["Regeneron", "Amgen", "Vertex"],
+    "risks": [
+      "Clinical trial failures",
+      "Dependence on subsidiary performance",
+      "Regulatory challenges"
+    ],
+    "notes": "Parent company of multiple biotech 'Vants'",
+    "lastUpdated": "2025-03-11"
+  },
+  {
+    "id": "recursion",
+    "name": "Recursion Pharmaceuticals",
+    "description": "AI-powered drug discovery company using computational and experimental approaches to identify novel therapeutics across multiple disease areas.",
+    "founded": 2013,
+    "headquarters": "Salt Lake City, Utah",
+    "website": "https://recursion.com",
+    "sector": "Biotechnology",
+    "subsector": "AI Drug Discovery",
+    "lastFunding": {
+      "round": "Series C",
+      "amount": 350000000,
+      "currency": "USD",
+      "date": "2024-06",
+      "valuation": 4300000000,
+      "investors": ["NVIDIA", "Google Ventures", "Catalio Capital"]
+    },
+    "pipeline": [
+      {
+        "drug": "REC-994",
+        "indication": " Cerebral Cavernous Malformation",
+        "phase": "Phase II",
+        "note": "Company's first AI-designed drug to reach clinical trials"
+      },
+      {
+        "drug": "REC-2282",
+        "indication": "Neurofibromatosis Type 2",
+        "phase": "Phase II/III"
+      },
+      {
+        "drug": "REC-4881",
+        "indication": "Familial Adenomatous Polyposis",
+        "phase": "Phase II"
+      }
+    ],
+    "competitors": ["Exscientia", "Insitro", "Atomwise"],
+    "risks": [
+      "AI technology validation",
+      "Clinical development capability",
+      "Competition in AI drug discovery"
+    ],
+    "notes": "Trading as RXRX on NASDAQ since 2021",
+    "lastUpdated": "2025-03-11"
+  },
+  {
+    "id": "exscientia",
+    "name": "Exscientia plc",
+    "description": "AI-driven drug discovery company focused on small molecule design, using purpose-built AI algorithms to optimize drug candidates.",
+    "founded": 2012,
+    "headquarters": "Oxford, UK",
+    "website": "https://exscientia.ai",
+    "sector": "Biotechnology",
+    "subsector": "AI Drug Design",
+    "lastFunding": {
+      "round": "Series C",
+      "amount": 225000000,
+      "currency": "USD",
+      "date": "2024-03",
+      "valuation": 3000000000,
+      "investors": ["BlackRock", "Neonier Capital", "Paradigm Biopharma"]
+    },
+    "pipeline": [
+      {
+        "drug": "EXS21546",
+        "indication": "Renal Cell Carcinoma",
+        "phase": "Phase I/II",
+        "note": "AI-designed A2A antagonist"
+      },
+      {
+        "drug": "EXS-61746",
+        "indication": "Solid Tumors",
+        "phase": "Phase I"
+      }
+    ],
+    "competitors": ["Recursion", "Insitro", "Relay Therapeutics"],
+    "risks": [
+      "Clinical development execution",
+      "Partnership dependency",
+      "Technology differentiation"
+    ],
+    "notes": "Trading as EXAI on NASDAQ since 2021",
+    "lastUpdated": "2025-03-11"
+  },
+  {
+    "id": "insitro",
+    "name": "Insitro",
+    "description": "Combines machine learning and human genetics to discover novel therapies and accelerate drug development.",
+    "founded": 2018,
+    "headquarters": "South San Francisco, California",
+    "website": "https://insitro.com",
+    "sector": "Biotechnology",
+    "subsector": "AI + Machine Learning",
+    "lastFunding": {
+      "round": "Series C",
+      "amount": 400000000,
+      "currency": "USD",
+      "date": "2023-09",
+      "valuation": 2500000000,
+      "investors": ["Andreessen Horowitz", "GV", "Casdin Capital", "NVIDIA"]
+    },
+    "pipeline": [
+      {
+        "drug": "INS-3001",
+        "indication": "Huntington's Disease",
+        "phase": "Preclinical",
+        "note": "RNA-targeting small molecule"
+      },
+      {
+        "drug": "INS-201",
+        "indication": "ALS",
+        "phase": "Preclinical",
+        "note": "Genetics-driven approach"
+      }
+    ],
+    "competitors": ["Recursion", "Exscientia", "Deep Genomics"],
+    "risks": [
+      "Early-stage pipeline",
+      "Technology validation",
+      "Capital intensive R&D"
+    ],
+    "notes": "Strong academic founders from Stanford",
+    "lastUpdated": "2025-03-11"
+  },
+  {
+    "id": "generate-biomedicines",
+    "name": "Generate:Biomedicines",
+    "description": "Pioneering the field of generative biology to create novel protein therapeutics across multiple modalities.",
+    "founded": 2020,
+    "headquarters": "Cambridge, Massachusetts",
+    "website": "https://generatebiomedicines.com",
+    "sector": "Biotechnology",
+    "subsector": "Protein Therapeutics",
+    "lastFunding": {
+      "round": "Series B",
+      "amount": 273000000,
+      "currency": "USD",
+      "date": "2023-11",
+      "valuation": 1450000000,
+      "investors": ["Flagship Pioneering", "Abu Dhabi Investment Authority", "T. Rowe Price"]
+    },
+    "pipeline": [
+      {
+        "drug": "GBM-001",
+        "indication": "Multiple Oncology Targets",
+        "phase": "Discovery/Preclinical",
+        "note": "Generative AI-designed protein"
+      }
+    ],
+    "competitors": ["Absci", "Arzeda", "Molecular Assemblies"],
+    "risks": [
+      "Very early stage",
+      "Novel technology risk",
+      "Competition in generative AI"
+    ],
+    "notes": "Founded by Flagship Pioneering",
+    "lastUpdated": "2025-03-11"
+  }
+]
