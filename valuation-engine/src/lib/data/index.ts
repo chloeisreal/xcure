@@ -6,3 +6,6 @@ export * from './ipo';
 export * from './sec';
 export * from './hkex';
 export * from './tokens';
+export * from './clinicaltrials';
+export * from './collector';
+export * from './quality';
