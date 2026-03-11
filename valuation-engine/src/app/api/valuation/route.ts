@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { calculateDCF } from '@/lib/valuation/dcf';
-import { getQuote, getCompanyInfo } from '@/lib/data/stocks';
+import { calculateComps } from '@/lib/valuation/comps';
+import { calculatePortfolioNPV } from '@/lib/valuation/rnpv';
+import { generateAIReport } from '@/lib/valuation/ai';
+import { getQuote } from '@/lib/data/stocks';
 import { getIPOCompanies, getPreIPOCompanies, getTokenizedBiotech, findTokenBySymbol } from '@/lib/data/local';
 import type { ValuationRequest, ValuationResponse, CompanyType } from '@/lib/data/types';
 
 export async function POST(request: NextRequest): Promise<NextResponse<ValuationResponse>> {
   try {
     const body: ValuationRequest = await request.json();
-    const { symbol, type = 'listed', methods = ['dcf'], aiSummary = true } = body;
+    const { symbol, type = 'listed', methods = ['dcf', 'comps', 'rnpv', 'ai'], aiSummary = true } = body;
     
     if (!symbol) {
       return NextResponse.json({
@@ -21,6 +24,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Valuation
     let currentPrice: number | undefined;
     let name = symbol;
     let companyType: CompanyType = type;
+    let pipeline = [];
     
     if (type === 'listed') {
       const quote = await getQuote(symbol);
@@ -57,6 +61,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Valuation
         }, { status: 404 });
       }
       name = company.name;
+      pipeline = company.prospectus?.pipeline || [];
       companyType = 'ipo';
       dataSources.push('local');
     } else if (type === 'preipo') {
@@ -71,6 +76,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Valuation
       }
       name = company.name;
       currentPrice = company.lastFunding.valuation;
+      pipeline = company.pipeline || [];
       companyType = 'preipo';
       dataSources.push('local');
     }
@@ -82,6 +88,29 @@ export async function POST(request: NextRequest): Promise<NextResponse<Valuation
       if (dcfResult) {
         valuation.dcf = dcfResult;
       }
+    }
+    
+    if (type === 'listed' && methods.includes('comps')) {
+      const compsResult = await calculateComps(symbol);
+      if (compsResult) {
+        valuation.comps = compsResult;
+      }
+    }
+    
+    if ((type === 'ipo' || type === 'preipo' || type === 'listed') && methods.includes('rnpv') && pipeline.length > 0) {
+      const rnpvResult = calculatePortfolioNPV(pipeline, currentPrice);
+      if (rnpvResult) {
+        valuation.rnpv = rnpvResult;
+      }
+    }
+    
+    if (aiSummary) {
+      const aiResult = await generateAIReport(name, {
+        dcf: valuation.dcf,
+        comps: valuation.comps,
+        rnpv: valuation.rnpv,
+      });
+      valuation.ai = aiResult;
     }
     
     const response: ValuationResponse = {
