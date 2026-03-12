@@ -161,6 +161,15 @@ export default function Home() {
       {/* Report */}
       {hasReport && (
         <section className="flex-1 max-w-6xl mx-auto px-4 py-8 w-full">
+          {/* Risk Warning - Show above title */}
+          <div className="rounded-xl border border-amber-600/30 bg-amber-900/20 p-4 text-center mb-6">
+            <p className="text-amber-400 text-sm font-medium">
+              ⚠️ Investment Risk Warning: Stocks and tokens may become worthless. 
+              Analysis and valuation results are for reference only. 
+              Do your own research before making any investment decisions.
+            </p>
+          </div>
+          
           {currentQuery && (
             <div className="mb-6">
               <h2 className="text-xl font-semibold text-white">

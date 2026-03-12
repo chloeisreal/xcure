@@ -166,11 +166,19 @@ function ValuationCard({
 }
 
 function AIResultCard({ result }: { result: AIResult }) {
+  const [isExpanded, setIsExpanded] = React.useState(false);
+
   return (
-    <div className="rounded-xl border border-purple-500/30 bg-purple-900/10 p-5">
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-xl">🤖</span>
-        <h3 className="font-semibold text-white">AI Analysis</h3>
+    <div 
+      className="rounded-xl border border-purple-500/30 bg-purple-900/10 p-5 cursor-pointer hover:border-purple-500/50 transition-colors"
+      onClick={() => setIsExpanded(!isExpanded)}
+    >
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">🤖</span>
+          <h3 className="font-semibold text-white">AI Analysis</h3>
+        </div>
+        <span className="text-xs text-purple-400">{isExpanded ? "▲ Click to collapse" : "▼ Click to expand"}</span>
       </div>
 
       <div className="space-y-3">
@@ -192,8 +200,8 @@ function AIResultCard({ result }: { result: AIResult }) {
         </div>
 
         {result.summary && (
-          <div className="pt-3 border-t border-purple-500/20">
-            <p className="text-xs text-slate-400 line-clamp-3">{result.summary}</p>
+          <div className={`pt-3 border-t border-purple-500/20 ${isExpanded ? '' : 'max-h-20 overflow-hidden'}`}>
+            <p className={`text-xs text-slate-400 whitespace-pre-wrap ${isExpanded ? '' : 'line-clamp-3'}`}>{result.summary}</p>
           </div>
         )}
       </div>
