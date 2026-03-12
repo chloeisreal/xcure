@@ -5,7 +5,24 @@ import { calculatePortfolioNPV } from '@/lib/valuation/rnpv';
 import { generateAIReport } from '@/lib/valuation/ai';
 import { getQuote } from '@/lib/data/stocks';
 import { getIPOCompanies, getPreIPOCompanies, getTokenizedBiotech, findTokenBySymbol } from '@/lib/data/local';
-import type { ValuationRequest, ValuationResponse, CompanyType, Valuation } from '@/lib/data/types';
+import { findProspectusPDF, getLocalProspectusPath } from '@/lib/data/prospectus';
+import { extractProspectusWithAI } from '@/lib/prospectus/extractor';
+import type { ValuationRequest, ValuationResponse, CompanyType, Valuation, ClinicalPhase } from '@/lib/data/types';
+
+type ExtractedTrial = {
+  product: string;
+  indication: string;
+  phase: string;
+};
+
+function mapPhase(phase: string): ClinicalPhase {
+  const p = phase.toLowerCase();
+  if (p.includes('phase iii') || p.includes('phase 3')) return 'Phase III';
+  if (p.includes('phase ii') || p.includes('phase 2')) return 'Phase II';
+  if (p.includes('phase i') || p.includes('phase 1')) return 'Phase I';
+  if (p.includes('preclinical')) return 'Preclinical';
+  return 'Phase I';
+}
 
 export async function POST(request: NextRequest): Promise<NextResponse<ValuationResponse>> {
   try {
@@ -104,6 +121,28 @@ export async function POST(request: NextRequest): Promise<NextResponse<Valuation
       pipeline = company.prospectus?.pipeline || [];
       companyType = 'ipo';
       dataSources.push('local');
+
+      const hkexCode = (company as any).hkexCode;
+      if (hkexCode && methods.includes('rnpv')) {
+        try {
+          const localPath = getLocalProspectusPath(hkexCode);
+          if (localPath) {
+            const extracted = await extractProspectusWithAI(hkexCode, localPath);
+            if (extracted && extracted.pipeline.length > 0) {
+              pipeline = extracted.pipeline.map((p: ExtractedTrial) => ({
+                product: p.product,
+                indication: p.indication,
+                phase: mapPhase(p.phase),
+              }));
+              dataSources.push('prospectus-ai');
+            }
+          } else {
+            await findProspectusPDF(hkexCode);
+          }
+        } catch (e) {
+          console.error('Prospectus extraction error:', e);
+        }
+      }
     } else if (type === 'preipo') {
       const preipoList = await getPreIPOCompanies();
       const company = preipoList.find(c => c.id === symbol || c.name.toLowerCase().includes(symbol.toLowerCase()));

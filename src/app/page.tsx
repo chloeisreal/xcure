@@ -26,6 +26,7 @@ export default function Home() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [currentQuery, setCurrentQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [cacheStatus, setCacheStatus] = useState<"HIT" | "MISS" | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   
   const { getValuation, loading: valuationLoading, result: valuationResult } = useValuation();
@@ -47,6 +48,11 @@ export default function Home() {
         body: JSON.stringify({ query }),
         signal: controller.signal,
       });
+
+      const cacheHeader = res.headers.get("X-Cache");
+      if (cacheHeader) {
+        setCacheStatus(cacheHeader as "HIT" | "MISS");
+      }
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: "Unknown error" }));
@@ -186,12 +192,19 @@ export default function Home() {
           
           {currentQuery && (
             <div className="mb-6">
-              <h2 className="text-xl font-semibold text-white">
-                {mode === "analysis" ? "Analysis" : "Valuation"}:{" "}
-                <span className={mode === "analysis" ? "text-blue-400" : "text-purple-400"}>
-                  {currentQuery}
-                </span>
-              </h2>
+              <div className="flex items-center gap-3 flex-wrap">
+                <h2 className="text-xl font-semibold text-white">
+                  {mode === "analysis" ? "Analysis" : "Valuation"}:{" "}
+                  <span className={mode === "analysis" ? "text-blue-400" : "text-purple-400"}>
+                    {currentQuery}
+                  </span>
+                </h2>
+                {cacheStatus === "HIT" && (
+                  <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/30">
+                    Cached result
+                  </span>
+                )}
+              </div>
               {isLoading && (
                 <p className="text-sm text-slate-500 mt-1">
                   {mode === "analysis" ? "Generating report…" : "Calculating valuation…"}
