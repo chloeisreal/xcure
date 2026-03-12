@@ -177,3 +177,48 @@ export function extractSymbol(query: string): string {
   
   return upper.split(/\s+/)[0];
 }
+
+export interface CompanySearchResult {
+  symbol: string;
+  name: string;
+  nameEn?: string;
+  type: CompanyType;
+  exchange?: string;
+  id: string;
+}
+
+export async function resolveCompanyName(query: string): Promise<CompanySearchResult | null> {
+  const trimmed = query.trim();
+  
+  if (!trimmed) return null;
+  
+  if (/^[A-Z]{1,5}$/.test(trimmed.toUpperCase())) {
+    return {
+      symbol: trimmed.toUpperCase(),
+      name: trimmed,
+      type: detectCompanyType(trimmed),
+      id: trimmed.toLowerCase(),
+    };
+  }
+  
+  try {
+    const res = await fetch(`/api/companies/search?q=${encodeURIComponent(trimmed)}&limit=1`);
+    const data = await res.json();
+    
+    if (data.success && data.data && data.data.length > 0) {
+      const result = data.data[0];
+      return {
+        symbol: result.symbol,
+        name: result.name,
+        nameEn: result.nameEn,
+        type: result.type,
+        exchange: result.exchange,
+        id: result.id,
+      };
+    }
+  } catch (e) {
+    console.error('Company search failed:', e);
+  }
+  
+  return null;
+}

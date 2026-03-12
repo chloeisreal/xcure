@@ -8,6 +8,15 @@ import {
   ListedCompany 
 } from './types';
 
+export interface CompanySearchResult {
+  symbol: string;
+  name: string;
+  nameEn?: string;
+  type: 'ipo' | 'preipo' | 'token' | 'listed';
+  exchange?: string;
+  id: string;
+}
+
 const DATA_DIR = path.join(process.cwd(), 'data');
 
 function loadJSON<T>(filename: string): T[] {
@@ -111,4 +120,65 @@ export async function getAllCompanies() {
     token: tokenized,
     listed: [] as ListedCompany[],
   };
+}
+
+export async function searchCompanies(query: string, limit: number = 10): Promise<CompanySearchResult[]> {
+  if (!query || query.trim().length === 0) {
+    return [];
+  }
+
+  const normalizedQuery = query.toLowerCase().trim();
+  const results: CompanySearchResult[] = [];
+  const seen = new Set<string>();
+
+  const [ipoCompanies, preipoCompanies, tokens] = await Promise.all([
+    getIPOCompanies(),
+    getPreIPOCompanies(),
+    getTokenizedBiotech(),
+  ]);
+
+  function addIfMatch(
+    company: { name: string; nameEn?: string; id: string; hkexCode?: string },
+    type: 'ipo' | 'preipo' | 'token',
+    exchange?: string
+  ) {
+    const name = company.name;
+    const nameEn = company.nameEn || '';
+    const matchKey = `${type}-${company.id}`;
+    
+    if (seen.has(matchKey)) return;
+    
+    const isMatch = 
+      name.toLowerCase().includes(normalizedQuery) ||
+      (nameEn && nameEn.toLowerCase().includes(normalizedQuery)) ||
+      normalizedQuery.includes(name.toLowerCase()) ||
+      normalizedQuery.includes(nameEn.toLowerCase()) ||
+      (nameEn && normalizedQuery.includes(nameEn.toLowerCase()));
+    
+    if (isMatch) {
+      seen.add(matchKey);
+      results.push({
+        symbol: (company as any).hkexCode || (company as any).symbol || company.id,
+        name: company.name,
+        nameEn: company.nameEn,
+        type,
+        exchange,
+        id: company.id,
+      });
+    }
+  }
+
+  for (const company of ipoCompanies) {
+    addIfMatch(company, 'ipo', company.exchange);
+  }
+
+  for (const company of preipoCompanies) {
+    addIfMatch(company, 'preipo');
+  }
+
+  for (const token of tokens) {
+    addIfMatch(token, 'token');
+  }
+
+  return results.slice(0, limit);
 }

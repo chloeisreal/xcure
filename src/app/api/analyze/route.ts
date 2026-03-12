@@ -1,4 +1,7 @@
 import { NextRequest } from "next/server";
+import { cacheGet, cacheSet, cacheKey } from "@/lib/data/cache";
+
+const CACHE_TTL = 86400; // 24 hours
 
 const PROMPT = (query: string) => `You are XCure, an expert biotech AI investment analyst.
 Analyze the following project/token: "${query}"
@@ -65,6 +68,21 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  const normalizedQuery = query.toLowerCase().trim();
+  const cacheKeyName = cacheKey("analyze", normalizedQuery);
+
+  // Check cache first
+  const cached = await cacheGet<string>(cacheKeyName);
+  if (cached) {
+    return new Response(createMockStream(cached), {
+      headers: { 
+        "Content-Type": "text/plain; charset=utf-8",
+        "X-Cache": "HIT"
+      },
+    });
+  }
+
+  let fullText = "";
   const geminiKey = process.env.GEMINI_API_KEY;
 
   if (geminiKey) {
@@ -79,19 +97,36 @@ export async function POST(req: NextRequest) {
         const encoder = new TextEncoder();
         for await (const chunk of result.stream) {
           const text = chunk.text();
-          if (text) controller.enqueue(encoder.encode(text));
+          if (text) {
+            fullText += text;
+            controller.enqueue(encoder.encode(text));
+          }
         }
         controller.close();
       },
     });
 
+    // Save to cache after streaming completes
+    if (fullText) {
+      cacheSet(cacheKeyName, fullText, CACHE_TTL).catch(console.error);
+    }
+
     return new Response(stream, {
-      headers: { "Content-Type": "text/plain; charset=utf-8" },
+      headers: { 
+        "Content-Type": "text/plain; charset=utf-8",
+        "X-Cache": "MISS"
+      },
     });
   }
 
   // Mock fallback
-  return new Response(createMockStream(MOCK_ANALYSIS(query)), {
-    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  const mockText = MOCK_ANALYSIS(query);
+  cacheSet(cacheKeyName, mockText, CACHE_TTL).catch(console.error);
+  
+  return new Response(createMockStream(mockText), {
+    headers: { 
+      "Content-Type": "text/plain; charset=utf-8",
+      "X-Cache": "MISS"
+    },
   });
 }

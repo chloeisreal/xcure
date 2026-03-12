@@ -28,9 +28,15 @@ function getRecommendationColor(rec: string | undefined): string {
 interface Props {
   data: ValuationData;
   isLoading?: boolean;
+  loadingMethods?: {
+    dcf?: boolean;
+    comps?: boolean;
+    rnpv?: boolean;
+    ai?: boolean;
+  };
 }
 
-export default function ValuationReport({ data, isLoading }: Props) {
+export default function ValuationReport({ data, isLoading, loadingMethods = {} }: Props) {
   const { valuation, currentPrice, name, symbol, type } = data;
 
   return (
@@ -54,39 +60,41 @@ export default function ValuationReport({ data, isLoading }: Props) {
       {/* Valuation Methods Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* DCF */}
-        {valuation.dcf && (
-          <ValuationCard
-            title="DCF Valuation"
-            icon="📊"
-            result={valuation.dcf}
-            currentPrice={currentPrice}
-          />
-        )}
+        <ValuationCard
+          title="DCF Valuation"
+          icon="📊"
+          result={valuation.dcf}
+          currentPrice={currentPrice}
+          isLoading={loadingMethods.dcf}
+          hasData={!!valuation.dcf}
+        />
 
         {/* Comps */}
-        {valuation.comps && (
-          <ValuationCard
-            title="Comps Analysis"
-            icon="📈"
-            result={valuation.comps}
-            currentPrice={currentPrice}
-          />
-        )}
+        <ValuationCard
+          title="Comps Analysis"
+          icon="📈"
+          result={valuation.comps}
+          currentPrice={currentPrice}
+          isLoading={loadingMethods.comps}
+          hasData={!!valuation.comps}
+        />
 
         {/* rNPV */}
-        {valuation.rnpv && (
-          <ValuationCard
-            title="rNPV Pipeline"
-            icon="🧪"
-            result={valuation.rnpv}
-            currentPrice={currentPrice}
-          />
-        )}
+        <ValuationCard
+          title="rNPV Pipeline"
+          icon="🧪"
+          result={valuation.rnpv}
+          currentPrice={currentPrice}
+          isLoading={loadingMethods.rnpv}
+          hasData={!!valuation.rnpv}
+        />
 
         {/* AI */}
-        {valuation.ai && (
-          <AIResultCard result={valuation.ai} />
-        )}
+        <AIResultCard 
+          result={valuation.ai} 
+          isLoading={loadingMethods.ai}
+          hasData={!!valuation.ai}
+        />
       </div>
 
       {/* Data Sources */}
@@ -102,12 +110,44 @@ function ValuationCard({
   icon,
   result,
   currentPrice,
+  isLoading,
+  hasData,
 }: {
   title: string;
   icon: string;
-  result: DCFResult | CompsResult | rNPVResult;
+  result?: DCFResult | CompsResult | rNPVResult;
   currentPrice?: number;
+  isLoading?: boolean;
+  hasData?: boolean;
 }) {
+  if (isLoading && !hasData) {
+    return (
+      <div className="rounded-xl border border-slate-700 bg-[#111827] p-5 animate-pulse">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-xl">{icon}</span>
+          <h3 className="font-semibold text-white">{title}</h3>
+        </div>
+        <div className="space-y-3">
+          <div className="h-4 bg-slate-700 rounded w-3/4"></div>
+          <div className="h-4 bg-slate-700 rounded w-1/2"></div>
+          <div className="h-4 bg-slate-700 rounded w-2/3"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!result) {
+    return (
+      <div className="rounded-xl border border-slate-700 bg-[#111827] p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-xl">{icon}</span>
+          <h3 className="font-semibold text-white">{title}</h3>
+        </div>
+        <p className="text-sm text-slate-500">No data available</p>
+      </div>
+    );
+  }
+
   const fairValue = result.fairValue;
   const upside = result.upside;
   const upsideNum = parseFloat(upside.replace(/[^0-9.-]/g, ""));
@@ -165,8 +205,40 @@ function ValuationCard({
   );
 }
 
-function AIResultCard({ result }: { result: AIResult }) {
+function AIResultCard({ result, isLoading, hasData }: { 
+  result?: AIResult;
+  isLoading?: boolean;
+  hasData?: boolean;
+}) {
   const [isExpanded, setIsExpanded] = React.useState(false);
+
+  if (isLoading && !hasData) {
+    return (
+      <div className="rounded-xl border border-purple-500/30 bg-purple-900/10 p-5 animate-pulse">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-xl">🤖</span>
+          <h3 className="font-semibold text-white">AI Analysis</h3>
+        </div>
+        <div className="space-y-3">
+          <div className="h-4 bg-purple-900/30 rounded w-3/4"></div>
+          <div className="h-4 bg-purple-900/30 rounded w-1/2"></div>
+          <div className="h-4 bg-purple-900/30 rounded w-2/3"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!result) {
+    return (
+      <div className="rounded-xl border border-purple-500/30 bg-purple-900/10 p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-xl">🤖</span>
+          <h3 className="font-semibold text-white">AI Analysis</h3>
+        </div>
+        <p className="text-sm text-slate-500">Generating analysis...</p>
+      </div>
+    );
+  }
 
   return (
     <div 

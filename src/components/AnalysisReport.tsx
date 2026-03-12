@@ -65,14 +65,22 @@ type Props = {
 export default function AnalysisReport({ streamedText, isStreaming }: Props) {
   const sections = useMemo(() => parseStreamedText(streamedText), [streamedText]);
 
+  const hasAnyContent = Object.keys(sections).length > 0;
+  const showSkeleton = isStreaming && !hasAnyContent;
+
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
       {SECTION_META.map((meta, idx) => {
         const parsed = sections[meta.id];
-        // Determine if this section is the one currently being streamed (last visible)
+        
+        if (showSkeleton) {
+          return (
+            <ReportSectionSkeleton key={meta.id} meta={meta} />
+          );
+        }
+
         const populated = Object.keys(sections);
-        const isThisLast =
-          isStreaming && populated[populated.length - 1] === meta.id;
+        const isThisLast = isStreaming && populated[populated.length - 1] === meta.id;
 
         return (
           <ReportSection
@@ -81,9 +89,32 @@ export default function AnalysisReport({ streamedText, isStreaming }: Props) {
             badgeValue={parsed?.badgeValue ?? (isStreaming && idx === 0 && !parsed ? "…" : "—")}
             content={parsed?.content ?? ""}
             isStreaming={isThisLast}
+            isEmpty={!parsed?.content && !isStreaming}
           />
         );
       })}
+    </div>
+  );
+}
+
+function ReportSectionSkeleton({ meta }: { meta: typeof SECTION_META[0] }) {
+  return (
+    <div className="rounded-xl border border-slate-700 bg-[#111827] p-6 animate-pulse">
+      <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl leading-none">{meta.icon}</span>
+          <div className="h-5 bg-slate-700 rounded w-32"></div>
+        </div>
+        <div className="h-6 bg-slate-700 rounded w-16"></div>
+      </div>
+
+      <div className="space-y-2">
+        <div className="h-3 bg-slate-700/50 rounded w-full"></div>
+        <div className="h-3 bg-slate-700/50 rounded w-full"></div>
+        <div className="h-3 bg-slate-700/50 rounded w-3/4"></div>
+        <div className="h-3 bg-slate-700/50 rounded w-full"></div>
+        <div className="h-3 bg-slate-700/50 rounded w-5/6"></div>
+      </div>
     </div>
   );
 }

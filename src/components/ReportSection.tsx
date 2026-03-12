@@ -21,6 +21,7 @@ type Props = {
   badgeValue: string;
   content: string;
   isStreaming?: boolean;
+  isEmpty?: boolean;
 };
 
 function ScoreBadge({ value }: { value: string }) {
@@ -91,7 +92,7 @@ function Badge({ type, value }: { type: SectionMeta["badgeType"]; value: string 
   return <RiskBadge value={value} />;
 }
 
-export default function ReportSection({ meta, badgeValue, content, isStreaming }: Props) {
+export default function ReportSection({ meta, badgeValue, content, isStreaming, isEmpty }: Props) {
   return (
     <div className="rounded-xl border border-slate-700 bg-[#111827] p-6 flex flex-col gap-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
@@ -103,9 +104,15 @@ export default function ReportSection({ meta, badgeValue, content, isStreaming }
       </div>
 
       <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap min-h-[60px]">
-        {content}
-        {isStreaming && (
-          <span className="inline-block w-0.5 h-4 bg-blue-400 animate-pulse ml-0.5 align-text-bottom" />
+        {isEmpty ? (
+          <span className="text-slate-500 italic">This information is not available yet.</span>
+        ) : (
+          <>
+            {content}
+            {isStreaming && (
+              <span className="inline-block w-0.5 h-4 bg-blue-400 animate-pulse ml-0.5 align-text-bottom" />
+            )}
+          </>
         )}
       </div>
     </div>

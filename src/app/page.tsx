@@ -4,9 +4,21 @@ import { useState, useRef } from "react";
 import SearchForm from "@/components/SearchForm";
 import AnalysisReport from "@/components/AnalysisReport";
 import ValuationReport from "@/components/ValuationReport";
-import { useValuation, detectCompanyType, extractSymbol, type ValuationData } from "@/lib/valuation-client";
+import NotFoundState from "@/components/NotFoundState";
+import { useValuation, detectCompanyType, extractSymbol, resolveCompanyName, type ValuationData } from "@/lib/valuation-client";
 
 type Mode = "analysis" | "valuation";
+
+function isNotFoundError(error: string): boolean {
+  const lower = error.toLowerCase();
+  return (
+    lower.includes("not found") ||
+    lower.includes("company not found") ||
+    lower.includes("not_found") ||
+    lower.includes("no data") ||
+    lower.includes("symbol not found")
+  );
+}
 
 export default function Home() {
   const [mode, setMode] = useState<Mode>("analysis");
@@ -67,8 +79,10 @@ export default function Home() {
     setStreamedText("");
 
     try {
-      const symbol = extractSymbol(query);
-      const type = detectCompanyType(query);
+      const resolved = await resolveCompanyName(query);
+      
+      const symbol = resolved?.symbol || extractSymbol(query);
+      const type = resolved?.type || detectCompanyType(query);
 
       await getValuation({
         symbol,
@@ -146,7 +160,7 @@ export default function Home() {
               </p>
             </div>
           )}
-          <SearchForm onSubmit={handleSubmit} isLoading={isLoading} />
+          <SearchForm onSubmit={handleSubmit} isLoading={isLoading} mode={mode} />
           {!hasReport && (
             <p className="text-xs text-slate-600">
               {mode === "analysis" 
@@ -186,9 +200,17 @@ export default function Home() {
             </div>
           )}
           {error ? (
-            <div className="rounded-xl border border-red-700 bg-red-900/20 p-6 text-red-400 text-sm">
-              {error}
-            </div>
+            isNotFoundError(error) ? (
+              <NotFoundState
+                query={currentQuery}
+                mode={mode}
+                onRetry={() => handleSubmit(currentQuery)}
+              />
+            ) : (
+              <div className="rounded-xl border border-red-700 bg-red-900/20 p-6 text-red-400 text-sm">
+                {error}
+              </div>
+            )
           ) : mode === "analysis" ? (
             <AnalysisReport streamedText={streamedText} isStreaming={isStreaming} />
           ) : (

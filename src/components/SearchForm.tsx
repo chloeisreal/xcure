@@ -5,10 +5,14 @@ import React, { useState } from "react";
 type Props = {
   onSubmit: (query: string) => void;
   isLoading: boolean;
+  mode?: "analysis" | "valuation";
 };
 
-export default function SearchForm({ onSubmit, isLoading }: Props) {
+export default function SearchForm({ onSubmit, isLoading, mode = "analysis" }: Props) {
   const [value, setValue] = useState("");
+
+  const buttonText = mode === "valuation" ? "Valuing..." : "Analyzing...";
+  const buttonLabel = mode === "valuation" ? "Valuation" : "Analyze";
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -37,10 +41,10 @@ export default function SearchForm({ onSubmit, isLoading }: Props) {
         {isLoading ? (
           <>
             <Spinner />
-            Analyzing…
+            {buttonText}
           </>
         ) : (
-          "Analyze"
+          buttonLabel
         )}
       </button>
     </form>

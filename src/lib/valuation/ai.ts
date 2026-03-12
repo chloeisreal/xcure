@@ -1,7 +1,9 @@
 import type { AIResult, DCFResult, CompsResult, rNPVResult } from '../data/types';
+import { cacheGet, cacheSet, cacheKey } from '../data/cache';
 
 const MINIMAX_API_URL = 'https://api.minimax.io/v1/text/chatcompletion_v2';
 const MINIMAX_MODEL = 'MiniMax-M2.5';
+const CACHE_TTL = 14400; // 4 hours
 
 const AI_PROMPT = (companyName: string, dcf?: DCFResult, comps?: CompsResult, rnpv?: rNPVResult) => `
 You are XCure, an expert biotech AI investment analyst.
@@ -52,6 +54,14 @@ export async function generateAIValuation(
   comps?: CompsResult,
   rnpv?: rNPVResult
 ): Promise<AIResult | null> {
+  const symbol = companyName.toUpperCase().replace(/\s+/g, '');
+  const cacheKeyName = cacheKey('ai:valuation', symbol);
+  
+  const cached = await cacheGet<AIResult>(cacheKeyName);
+  if (cached) {
+    return cached;
+  }
+
   const apiKey = process.env.MINIMAX_API_KEY;
   
   console.log('MiniMax API Key present:', !!apiKey);
@@ -114,13 +124,17 @@ export async function generateAIValuation(
 
     const parsed = JSON.parse(jsonMatch[0]);
     
-    return {
+    const result: AIResult = {
       method: 'AI',
       fairValue: parsed.targetPrice || calculateAverageFairValue(dcf, comps, rnpv),
       recommendation: parsed.recommendation || 'Hold',
       confidence: parsed.confidence || 50,
       summary: parsed.summary || 'AI analysis completed with limited data.',
     };
+    
+    cacheSet(cacheKeyName, result, CACHE_TTL).catch(console.error);
+    
+    return result;
   } catch (error) {
     console.error('MiniMax API error:', error);
     return generateFallbackAIValuation(companyName, dcf, comps, rnpv);
