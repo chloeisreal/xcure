@@ -1,4 +1,4 @@
-import SwapWidget from "@/components/SwapWidget";
+import SwapContent from "@/components/SwapContent";
 
 export default function SwapPage() {
   return (
@@ -10,7 +10,7 @@ export default function SwapPage() {
             Swap between leading biotech and DeSci tokens
           </p>
         </div>
-        <SwapWidget />
+        <SwapContent />
       </section>
 
       <footer className="border-t border-slate-800 py-4">
