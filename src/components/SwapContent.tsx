@@ -5,13 +5,10 @@ import SwapWidget from "@/components/SwapWidget";
 import LocalSwapWidget from "@/components/LocalSwapWidget";
 
 const HARDHAT_CHAIN_ID = 31337;
+const ARBITRUM_SEPOLIA_CHAIN_ID = 421614;
 
-/**
- * Renders the correct swap widget based on the connected chain:
- * - Chain 31337 (Hardhat local) → LocalSwapWidget (direct AMM contract calls)
- * - Any other chain              → SwapWidget (0x Protocol API)
- */
 export default function SwapContent() {
   const chainId = useChainId();
-  return chainId === HARDHAT_CHAIN_ID ? <LocalSwapWidget /> : <SwapWidget />;
+  const useLocalSwap = chainId === HARDHAT_CHAIN_ID || chainId === ARBITRUM_SEPOLIA_CHAIN_ID;
+  return useLocalSwap ? <LocalSwapWidget /> : <SwapWidget />;
 }

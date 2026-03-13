@@ -1,25 +1,13 @@
 require("@nomicfoundation/hardhat-toolbox");
+require("dotenv").config();
 
-/** @type {import('hardhat/config').HardhatUserConfig} */
 module.exports = {
-  solidity: {
-    version: "0.8.20",
-    settings: {
-      optimizer: { enabled: true, runs: 200 },
-    },
-  },
+  solidity: "0.8.20",
   networks: {
-    // Local Hardhat node — matches MetaMask "Add Network" settings
-    localhost: {
-      url: "http://127.0.0.1:8545",
-      chainId: 31337,
+    hardhat: {},
+    arbitrumSepolia: {
+      url: process.env.ARBITRUM_SEPOLIA_RPC,
+      accounts: [process.env.PRIVATE_KEY],
     },
-  },
-  paths: {
-    sources: "./contracts",
-    scripts: "./scripts",
-    artifacts: "./artifacts",
-    // Separate cache to avoid collisions with Next.js build cache
-    cache: "./cache-hardhat",
   },
 };
