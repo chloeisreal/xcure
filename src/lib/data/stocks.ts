@@ -51,7 +51,8 @@ export async function getQuoteFromStockprices(symbol: string): Promise<Quote | n
 export async function getQuoteFromYahoo(symbol: string): Promise<Quote | null> {
   try {
     const yahooFinanceModule = await import('yahoo-finance2');
-    const quote = await yahooFinanceModule.default.quote(symbol);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const quote = await (yahooFinanceModule.default as any).quote(symbol);
     
     if (!quote) return null;
     
