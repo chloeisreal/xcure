@@ -362,6 +362,7 @@ export default function SwapWidget() {
   }
 
   const btn = getButton();
+  const hasZeroExFee = !!(priceQuote?.fees && (priceQuote.fees as Record<string, unknown>).zeroExFee);
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-4">
@@ -474,7 +475,7 @@ export default function SwapWidget() {
                 </span>
               </div>
             )}
-            {priceQuote.fees && !!(priceQuote.fees as Record<string, unknown>).zeroExFee && (
+            {hasZeroExFee && (
               <div className="flex justify-between text-xs text-slate-500">
                 <span>0x fee</span>
                 <span>
