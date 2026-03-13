@@ -474,7 +474,7 @@ export default function SwapWidget() {
                 </span>
               </div>
             )}
-            {priceQuote.fees && (priceQuote.fees as Record<string, unknown>).zeroExFee && (
+            {priceQuote.fees && !!(priceQuote.fees as Record<string, unknown>).zeroExFee && (
               <div className="flex justify-between text-xs text-slate-500">
                 <span>0x fee</span>
                 <span>
