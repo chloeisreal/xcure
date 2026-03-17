@@ -210,5 +210,70 @@
       "市场渗透挑战"
     ],
     "lastUpdated": "2025-03-11"
+  },
+  {
+    "id": "novlead",
+    "name": "南京诺令生物科技股份有限公司",
+    "nameEn": "Nanjing Novlead Biotechnology Co., Ltd.",
+    "hkexCode": "",
+    "exchange": "HKEX",
+    "listingType": "18A",
+    "sector": "medical-device",
+    "subsector": "心肺诊疗设备",
+    "filingDate": "2025-03",
+    "status": "Pending",
+    "financials": {
+      "revenue": 45547000,
+      "revenueCurrency": "CNY",
+      "grossMargin": 0.593,
+      "netLoss": 86246000,
+      "cash": 30000000,
+      "debt": 557000000,
+      "latestYear": "2024"
+    },
+    "prospectus": {
+      "description": "诺令生物成立于2018年，专注于一氧化氮（NO）吸入疗法研发与商业化。核心产品iNOwill是全球首款获批的电化学催化法iNO设备，2022年获NMPA批准、2025年获CE认证，中国iNO治疗市场市占率第一。",
+      "pipeline": [
+        {
+          "product": "iNOwill",
+          "indication": "一氧化氮吸入治疗",
+          "stage": "已批准上市",
+          "note": "核心产品，全球首款电化学催化法iNO设备"
+        },
+        {
+          "product": "eNO aire",
+          "indication": "呼气NO检测",
+          "stage": "已商业化",
+          "note": "一氧化氮检测产品"
+        },
+        {
+          "product": "NovaPulse IABP",
+          "indication": "主动脉内球囊反搏",
+          "stage": "已商业化",
+          "note": "心肺诊疗设备"
+        }
+      ],
+      "lastFinancing": {
+        "round": "C轮",
+        "amount": "1.48亿元",
+        "valuation": "16.48亿元",
+        "date": "2025-03"
+      },
+      "useOfProceeds": [
+        "产品开发",
+        "注册",
+        "商业化能力建设",
+        "补充运营资金"
+      ]
+    },
+    "risks": [
+      "商业化进展缓慢",
+      "持续亏损",
+      "现金流紧张",
+      "高度依赖融资",
+      "产品结构单一",
+      "竞争激烈"
+    ],
+    "lastUpdated": "2025-03-13"
   }
 ]

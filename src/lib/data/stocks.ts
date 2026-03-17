@@ -122,29 +122,41 @@ const MOCK_QUOTES: Record<string, Quote> = {
   'VITA': { symbol: 'VITA', name: 'VitaDAO', price: 0.32, change: 0.02, changePercent: 6.67, volume: 500000, marketCap: 32000000, currency: 'USD', timestamp: new Date().toISOString() },
   'BIO': { symbol: 'BIO', name: 'BIO Protocol', price: 0.85, change: 0.05, changePercent: 6.25, volume: 1000000, marketCap: 127500000, currency: 'USD', timestamp: new Date().toISOString() },
   'AAPL': { symbol: 'AAPL', name: 'Apple Inc.', price: 178.50, change: 2.30, changePercent: 1.31, volume: 55000000, marketCap: 2800000000000, currency: 'USD', timestamp: new Date().toISOString() },
+  // Hong Kong stocks
+  '00700.HK': { symbol: '00700.HK', name: 'Tencent Holdings Ltd.', price: 385.20, change: 5.60, changePercent: 1.48, volume: 15000000, marketCap: 3600000000000, currency: 'HKD', timestamp: new Date().toISOString() },
+  '01810.HK': { symbol: '01810.HK', name: 'Kuaishou Technology', price: 68.50, change: -1.20, changePercent: -1.72, volume: 8000000, marketCap: 290000000000, currency: 'HKD', timestamp: new Date().toISOString() },
+  '09988.HK': { symbol: '09988.HK', name: 'Alibaba Group', price: 138.20, change: 2.30, changePercent: 1.69, volume: 12000000, marketCap: 2800000000000, currency: 'HKD', timestamp: new Date().toISOString() },
+  '01856.HK': { symbol: '01856.HK', name: 'Insilico Medicine', price: 52.80, change: 1.50, changePercent: 2.92, volume: 3000000, marketCap: 1400000000, currency: 'HKD', timestamp: new Date().toISOString() },
 };
 
 export async function getQuote(symbol: string): Promise<Quote | null> {
-  const cacheKeyName = cacheKey('quote', symbol.toUpperCase());
+  let querySymbol = symbol.toUpperCase().trim();
+  
+  // Handle Hong Kong stock codes (5 digits like 00700, 01810)
+  if (/^\d{5}$/.test(querySymbol)) {
+    querySymbol = querySymbol + '.HK';
+  }
+  
+  const cacheKeyName = cacheKey('quote', querySymbol.toUpperCase());
   const cached = await cacheGet<Quote>(cacheKeyName);
   
   if (cached) {
     return cached;
   }
   
-  let quote = await getQuoteFromStockprices(symbol);
+  let quote = await getQuoteFromStockprices(querySymbol);
   
   if (!quote) {
-    quote = await getQuoteFromYahoo(symbol);
+    quote = await getQuoteFromYahoo(querySymbol);
   }
   
   if (!quote && process.env.FMP_API_KEY) {
-    quote = await getQuoteFromFMP(symbol);
+    quote = await getQuoteFromFMP(querySymbol);
   }
   
   // Fallback to mock data for testing
   if (!quote) {
-    const upperSymbol = symbol.toUpperCase();
+    const upperSymbol = querySymbol.toUpperCase();
     if (MOCK_QUOTES[upperSymbol]) {
       quote = MOCK_QUOTES[upperSymbol];
     }

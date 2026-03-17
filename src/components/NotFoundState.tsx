@@ -7,6 +7,7 @@ interface NotFoundStateProps {
   mode: "analysis" | "valuation";
   onRetry?: () => void;
   suggestions?: string[];
+  errorMessage?: string;
 }
 
 export default function NotFoundState({
@@ -14,6 +15,7 @@ export default function NotFoundState({
   mode,
   onRetry,
   suggestions = [],
+  errorMessage,
 }: NotFoundStateProps) {
   return (
     <div className="rounded-xl border border-slate-700 bg-[#111827] p-8 text-center">
@@ -21,9 +23,14 @@ export default function NotFoundState({
       <h3 className="text-xl font-semibold text-white mb-2">
         {mode === "valuation" ? "Company Not Found" : "Analysis Not Available"}
       </h3>
-      <p className="text-slate-400 mb-6">
-        We couldn't find "{query}" in our database.
-      </p>
+      
+      {errorMessage ? (
+        <p className="text-slate-400 mb-4">{errorMessage}</p>
+      ) : (
+        <p className="text-slate-400 mb-6">
+          We couldn't find "{query}" in our database.
+        </p>
+      )}
 
       {suggestions.length > 0 && (
         <div className="mb-6">
@@ -48,7 +55,11 @@ export default function NotFoundState({
           <li>Check the spelling of the company name or ticker symbol</li>
           <li>Try using the stock ticker (e.g., MRNA, BNTX)</li>
           {mode === "valuation" && (
-            <li>For Hong Kong stocks, use the 5-digit stock code</li>
+            <>
+              <li>For Hong Kong stocks, use the 5-digit stock code (e.g., 00700, 09988)</li>
+              <li>For US stocks, use the ticker symbol (e.g., AAPL, MRNA)</li>
+              <li>For crypto, use the symbol (e.g., BTC, ETH)</li>
+            </>
           )}
         </ul>
       </div>

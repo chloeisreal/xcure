@@ -13,6 +13,10 @@ export default function SearchForm({ onSubmit, isLoading, mode = "analysis" }: P
 
   const buttonText = mode === "valuation" ? "Valuing..." : "Analyzing...";
   const buttonLabel = mode === "valuation" ? "Valuation" : "Analyze";
+  
+  const placeholder = mode === "valuation" 
+    ? "Enter stock code, company name, or crypto (e.g., AAPL, 00700, BTC, Tencent)"
+    : "Enter project or token name (e.g., BioNTech, CURE)";
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -28,7 +32,7 @@ export default function SearchForm({ onSubmit, isLoading, mode = "analysis" }: P
         type="text"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder="Enter project or token name (e.g. BioNTech, CURE)"
+        placeholder={placeholder}
         className="flex-1 rounded-lg border border-slate-600 bg-slate-800/60 px-4 py-3 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
         disabled={isLoading}
         autoFocus

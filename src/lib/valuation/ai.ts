@@ -45,7 +45,7 @@ Please provide your analysis in JSON format with the following structure:
   "summary": "2-3 paragraph analysis"
 }
 
-Be specific, data-driven, and provide a balanced perspective on the investment opportunity.
+IMPORTANT: Respond in English only. Be specific, data-driven, and provide a balanced perspective on the investment opportunity.
 `;
 
 export async function generateAIValuation(

@@ -5,7 +5,8 @@ import SearchForm from "@/components/SearchForm";
 import AnalysisReport from "@/components/AnalysisReport";
 import ValuationReport from "@/components/ValuationReport";
 import NotFoundState from "@/components/NotFoundState";
-import { useValuation, detectCompanyType, extractSymbol, resolveCompanyName, type ValuationData } from "@/lib/valuation-client";
+import SearchFeedback from "@/components/SearchFeedback";
+import { useValuation, detectCompanyType, extractSymbol, resolveCompanyName, searchCompaniesWithCandidates, type ValuationData, type CompanySearchResult } from "@/lib/valuation-client";
 
 type Mode = "analysis" | "valuation";
 
@@ -27,6 +28,8 @@ export default function Home() {
   const [currentQuery, setCurrentQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [cacheStatus, setCacheStatus] = useState<"HIT" | "MISS" | null>(null);
+  const [candidates, setCandidates] = useState<CompanySearchResult[]>([]);
+  const [selectedCandidate, setSelectedCandidate] = useState<CompanySearchResult | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   
   const { getValuation, loading: valuationLoading, result: valuationResult } = useValuation();
@@ -75,7 +78,7 @@ export default function Home() {
     }
   }
 
-  async function handleValuation(query: string) {
+  async function handleValuation(query: string, forceRefresh: boolean = false) {
     if (abortRef.current) abortRef.current.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -83,22 +86,77 @@ export default function Home() {
     setCurrentQuery(query);
     setError(null);
     setStreamedText("");
+    setCandidates([]);
+    setSelectedCandidate(null);
 
     try {
-      const resolved = await resolveCompanyName(query);
+      const companyCandidates = await searchCompaniesWithCandidates(query);
       
-      const symbol = resolved?.symbol || extractSymbol(query);
-      const type = resolved?.type || detectCompanyType(query);
+      if (companyCandidates.length > 1) {
+        // Multiple candidates, show selector
+        setCandidates(companyCandidates);
+        return;
+      } else if (companyCandidates.length === 1) {
+        // Only one candidate, use directly
+        setSelectedCandidate(companyCandidates[0]);
+        const resolved = companyCandidates[0];
+        
+        await getValuation({
+          symbol: resolved.symbol,
+          type: resolved.type,
+          methods: ["dcf", "comps", "rnpv", "ai"],
+          aiSummary: true,
+        }, forceRefresh);
+      } else {
+        // No candidates in local DB, try as listed stock symbol
+        const symbol = extractSymbol(query);
+        const type = detectCompanyType(query);
 
-      await getValuation({
-        symbol,
-        type,
-        methods: ["dcf", "comps", "rnpv", "ai"],
-        aiSummary: true,
-      });
+        // Try to get valuation for listed stock
+        try {
+          await getValuation({
+            symbol,
+            type: 'listed',
+            methods: ["dcf", "comps", "rnpv", "ai"],
+            aiSummary: true,
+          }, forceRefresh);
+        } catch (valuationErr) {
+          // If valuation also fails, show error with option to add new company
+          if (valuationErr instanceof Error) {
+            setError(valuationErr.message);
+          } else {
+            setError(`No company found for "${query}". You can add a new company to the database.`);
+          }
+        }
+      }
     } catch (err: unknown) {
       if (err instanceof Error && err.name === "AbortError") return;
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      const errorMessage = err instanceof Error ? err.message : "Unknown error, please try again later";
+      setError(errorMessage);
+    }
+  }
+
+  async function handleSelectCandidate(candidate: CompanySearchResult, forceRefresh: boolean = false) {
+    setSelectedCandidate(candidate);
+    setCandidates([]);
+    
+    try {
+      await getValuation({
+        symbol: candidate.symbol,
+        type: candidate.type,
+        methods: ["dcf", "comps", "rnpv", "ai"],
+        aiSummary: true,
+      }, forceRefresh);
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === "AbortError") return;
+      const errorMessage = err instanceof Error ? err.message : "Unknown error, please try again later";
+      setError(errorMessage);
+    }
+  }
+
+  function handleRefresh() {
+    if (mode === "valuation" && currentQuery) {
+      handleValuation(currentQuery, true);
     }
   }
 
@@ -110,7 +168,7 @@ export default function Home() {
     }
   }
 
-  const hasReport = streamedText.length > 0 || isStreaming || valuationResult !== null;
+  const hasReport = streamedText.length > 0 || isStreaming || valuationResult !== null || error !== null;
   const isLoading = mode === "analysis" ? isStreaming : valuationLoading;
 
   return (
@@ -167,6 +225,35 @@ export default function Home() {
             </div>
           )}
           <SearchForm onSubmit={handleSubmit} isLoading={isLoading} mode={mode} />
+          
+          {/* Candidate Selector */}
+          {candidates.length > 0 && (
+            <div className="w-full max-w-2xl">
+              <p className="text-sm text-slate-400 mb-2">Multiple matches found. Please select the correct company:</p>
+              <div className="space-y-2">
+                {candidates.map((candidate) => (
+                  <button
+                    key={`${candidate.type}-${candidate.id}`}
+                    onClick={() => handleSelectCandidate(candidate)}
+                    className="w-full text-left p-3 rounded-lg border border-slate-600 bg-slate-800/60 hover:bg-slate-700/60 hover:border-blue-500 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-white font-medium">{candidate.name}</span>
+                        {candidate.nameEn && (
+                          <span className="text-slate-400 ml-2">({candidate.nameEn})</span>
+                        )}
+                      </div>
+                      <span className="text-xs px-2 py-1 rounded bg-slate-700 text-slate-300">
+                        {candidate.type}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {!hasReport && (
             <p className="text-xs text-slate-600">
               {mode === "analysis" 
@@ -192,17 +279,34 @@ export default function Home() {
           
           {currentQuery && (
             <div className="mb-6">
-              <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-3 flex-wrap relative">
                 <h2 className="text-xl font-semibold text-white">
                   {mode === "analysis" ? "Analysis" : "Valuation"}:{" "}
                   <span className={mode === "analysis" ? "text-blue-400" : "text-purple-400"}>
-                    {currentQuery}
+                    {selectedCandidate ? (selectedCandidate.nameEn || selectedCandidate.name) : currentQuery}
                   </span>
                 </h2>
                 {cacheStatus === "HIT" && (
                   <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/30">
                     Cached result
                   </span>
+                )}
+                {mode === "valuation" && (valuationResult || error) && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleRefresh}
+                      disabled={isLoading}
+                      className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 disabled:opacity-50 transition-colors"
+                      title="Refresh (bypass cache)"
+                    >
+                      <span>🔄</span>
+                      <span>Refresh</span>
+                    </button>
+                    <SearchFeedback 
+                      query={currentQuery} 
+                      selectedResult={valuationResult?.name}
+                    />
+                  </div>
                 )}
               </div>
               {isLoading && (
@@ -217,6 +321,7 @@ export default function Home() {
               <NotFoundState
                 query={currentQuery}
                 mode={mode}
+                errorMessage={error}
                 onRetry={() => handleSubmit(currentQuery)}
               />
             ) : (
