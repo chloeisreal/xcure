@@ -43,6 +43,16 @@ export default function Nav() {
           >
             Swap
           </Link>
+          <Link
+            href="/tokenomics"
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              pathname === "/tokenomics"
+                ? "bg-blue-600/20 text-blue-400"
+                : "text-slate-400 hover:text-white hover:bg-slate-800"
+            }`}
+>
+  Tokenomics
+</Link>
         </nav>
       </div>
     </header>
