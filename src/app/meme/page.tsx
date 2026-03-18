@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useReadContract, useReadContracts } from "wagmi";
-import { formatEther } from "viem";
+import { formatUnits } from "viem";
 import { FACTORY_ADDRESS, FACTORY_ABI, MEME_TOKEN_ABI, GRAD_THRESHOLD } from "@/lib/meme-abis";
 
 const COLORS = ["#7c3aed", "#2563eb", "#059669", "#dc2626", "#d97706", "#db2777", "#0891b2", "#7c2d12"];
@@ -30,7 +30,7 @@ export default function MemePage() {
     contracts: tokenAddrs.flatMap((addr) => [
       { address: addr, abi: MEME_TOKEN_ABI, functionName: "name"      } as const,
       { address: addr, abi: MEME_TOKEN_ABI, functionName: "symbol"    } as const,
-      { address: addr, abi: MEME_TOKEN_ABI, functionName: "ethRaised" } as const,
+      { address: addr, abi: MEME_TOKEN_ABI, functionName: "cureRaised" } as const,
       { address: addr, abi: MEME_TOKEN_ABI, functionName: "graduated" } as const,
     ]),
     query: { enabled: tokenAddrs.length > 0, refetchInterval: 10_000 },
@@ -40,7 +40,7 @@ export default function MemePage() {
     address:   addr,
     name:      (tokenData?.[i * 4    ]?.result ?? "…")    as string,
     symbol:    (tokenData?.[i * 4 + 1]?.result ?? "…")    as string,
-    ethRaised: (tokenData?.[i * 4 + 2]?.result ?? 0n)     as bigint,
+    cureRaised: (tokenData?.[i * 4 + 2]?.result ?? 0n)    as bigint,
     graduated: (tokenData?.[i * 4 + 3]?.result ?? false)  as boolean,
   }));
 
@@ -90,7 +90,7 @@ export default function MemePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {tokens.map((token, i) => {
               const pct = Math.min(
-                Number((token.ethRaised * 10_000n) / GRAD_THRESHOLD) / 100,
+                Number((token.cureRaised * 10_000n) / GRAD_THRESHOLD) / 100,
                 100,
               );
               const color = COLORS[i % COLORS.length];
@@ -125,7 +125,7 @@ export default function MemePage() {
                   <div>
                     <div className="flex justify-between text-xs text-slate-500 mb-1.5">
                       <span>{pct.toFixed(1)}% to graduation</span>
-                      <span>{parseFloat(formatEther(token.ethRaised)).toFixed(4)} / 0.1 ETH</span>
+                      <span>{parseFloat(formatUnits(token.cureRaised, 18)).toFixed(4)} / 1000 CURE</span>
                     </div>
                     <div className="h-2 rounded-full bg-slate-700">
                       <div

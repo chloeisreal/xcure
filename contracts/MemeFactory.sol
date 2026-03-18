@@ -6,6 +6,7 @@ import "./BondingCurve.sol";
 /// @title MemeFactory — deploys MemeToken instances and maintains a registry
 contract MemeFactory {
     address public immutable feeRecipient;
+    address public immutable cureToken;
 
     address[] public allTokens;
 
@@ -17,8 +18,9 @@ contract MemeFactory {
         uint256 index
     );
 
-    constructor(address feeRecipient_) {
+    constructor(address feeRecipient_, address cureToken_) {
         feeRecipient = feeRecipient_;
+        cureToken    = cureToken_;
     }
 
     /// @notice Deploy a new MemeToken bonding curve.
@@ -27,7 +29,7 @@ contract MemeFactory {
         string calldata name,
         string calldata symbol
     ) external returns (address token) {
-        MemeToken meme = new MemeToken(name, symbol, msg.sender, feeRecipient);
+        MemeToken meme = new MemeToken(name, symbol, msg.sender, feeRecipient, cureToken);
         token = address(meme);
         allTokens.push(token);
         emit TokenCreated(token, msg.sender, name, symbol, allTokens.length - 1);

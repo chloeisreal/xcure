@@ -4,13 +4,14 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount, usePublicClient, useReadContracts, useWriteContract } from "wagmi";
-import { formatEther, formatUnits, parseEther, parseUnits } from "viem";
+import { useAccount, usePublicClient, useReadContract, useReadContracts, useWriteContract } from "wagmi";
+import { formatUnits, parseUnits, maxUint256, erc20Abi } from "viem";
 import {
   MEME_TOKEN_ABI,
+  CURE_ADDRESS,
   GRAD_THRESHOLD,
   estimateBuyTokens,
-  estimateSellETH,
+  estimateSellCure,
 } from "@/lib/meme-abis";
 
 const ZERO_ADDR = "0x0000000000000000000000000000000000000000" as const;
@@ -24,9 +25,9 @@ export default function TokenPage() {
   const { writeContractAsync } = useWriteContract();
 
   const [tab,       setTab]       = useState<"buy" | "sell">("buy");
-  const [buyInput,  setBuyInput]  = useState("");  // ETH amount string
+  const [buyInput,  setBuyInput]  = useState("");  // CURE amount string
   const [sellInput, setSellInput] = useState("");  // token amount string
-  const [txStatus,  setTxStatus]  = useState<"idle" | "pending" | "success" | "error">("idle");
+  const [txStatus,  setTxStatus]  = useState<"idle" | "approving" | "pending" | "success" | "error">("idle");
   const [txHash,    setTxHash]    = useState<string | null>(null);
   const [txError,   setTxError]   = useState<string | null>(null);
   const [meta, setMeta] = useState<{ imageURI?: string; description?: string }>({});
@@ -45,7 +46,7 @@ export default function TokenPage() {
       { address: tokenAddr, abi: MEME_TOKEN_ABI, functionName: "name"         },
       { address: tokenAddr, abi: MEME_TOKEN_ABI, functionName: "symbol"       },
       { address: tokenAddr, abi: MEME_TOKEN_ABI, functionName: "tokensSold"   },
-      { address: tokenAddr, abi: MEME_TOKEN_ABI, functionName: "ethRaised"    },
+      { address: tokenAddr, abi: MEME_TOKEN_ABI, functionName: "cureRaised"   },
       { address: tokenAddr, abi: MEME_TOKEN_ABI, functionName: "graduated"    },
       { address: tokenAddr, abi: MEME_TOKEN_ABI, functionName: "creator"      },
       { address: tokenAddr, abi: MEME_TOKEN_ABI, functionName: "currentPrice" },
@@ -57,36 +58,72 @@ export default function TokenPage() {
   const name        = (data?.[0]?.result ?? "…")    as string;
   const symbol      = (data?.[1]?.result ?? "…")    as string;
   const tokensSold  = (data?.[2]?.result ?? 0n)     as bigint;
-  const ethRaised   = (data?.[3]?.result ?? 0n)     as bigint;
+  const cureRaised  = (data?.[3]?.result ?? 0n)     as bigint;
   const graduated   = (data?.[4]?.result ?? false)  as boolean;
   const creator     = (data?.[5]?.result ?? ZERO_ADDR) as string;
   const spotPrice   = (data?.[6]?.result ?? 0n)     as bigint;
   const myBalance   = (data?.[7]?.result ?? 0n)     as bigint;
 
-  const pct = Math.min(Number((ethRaised * 10_000n) / GRAD_THRESHOLD) / 100, 100);
+  // CURE balance + allowance for this token contract
+  const { data: cureBalance, refetch: refetchCureBal } = useReadContract({
+    address: CURE_ADDRESS,
+    abi: erc20Abi,
+    functionName: "balanceOf",
+    args: [effectiveUser],
+    query: { enabled: !!userAddr },
+  });
+
+  const { data: cureAllowance, refetch: refetchAllowance } = useReadContract({
+    address: CURE_ADDRESS,
+    abi: erc20Abi,
+    functionName: "allowance",
+    args: [effectiveUser, tokenAddr],
+    query: { enabled: !!userAddr },
+  });
+
+  const cureBal = (cureBalance ?? 0n) as bigint;
+
+  const pct = Math.min(Number((cureRaised * 10_000n) / GRAD_THRESHOLD) / 100, 100);
 
   // ── Client-side estimates ───────────────────────────────────────────────
-  const buyEthBig = (() => { try { return parseEther(buyInput || "0"); }    catch { return 0n; } })();
-  const sellAmtBig = (() => { try { return parseUnits(sellInput || "0", 18); } catch { return 0n; } })();
+  const cureAmountBig = (() => { try { return parseUnits(buyInput || "0", 18); }  catch { return 0n; } })();
+  const sellAmtBig    = (() => { try { return parseUnits(sellInput || "0", 18); } catch { return 0n; } })();
 
-  const estimatedTokens = estimateBuyTokens(buyEthBig, tokensSold);
-  const estimatedETH    = estimateSellETH(sellAmtBig, tokensSold);
+  const estimatedTokens = estimateBuyTokens(cureAmountBig, tokensSold);
+  const estimatedCure   = estimateSellCure(sellAmtBig, tokensSold);
 
   // ── Transactions ────────────────────────────────────────────────────────
   function resetTx() { setTxStatus("idle"); setTxHash(null); setTxError(null); }
 
   async function handleBuy() {
-    if (!publicClient || buyEthBig === 0n) return;
-    setTxStatus("pending"); resetTx(); setTxStatus("pending");
+    if (!publicClient || cureAmountBig === 0n) return;
+    resetTx();
+    setTxStatus("pending");
     try {
-      const minTokens = (estimatedTokens * 95n) / 100n; // 5% slippage
       const fees = await publicClient.estimateFeesPerGas();
+
+      // Approve CURE if allowance is insufficient
+      if ((cureAllowance ?? 0n) < cureAmountBig) {
+        setTxStatus("approving");
+        const approveTx = await writeContractAsync({
+          address: CURE_ADDRESS,
+          abi: erc20Abi,
+          functionName: "approve",
+          args: [tokenAddr, maxUint256],
+          maxFeePerGas:         fees.maxFeePerGas,
+          maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
+        });
+        await publicClient.waitForTransactionReceipt({ hash: approveTx });
+        await refetchAllowance();
+        setTxStatus("pending");
+      }
+
+      const minTokens = (estimatedTokens * 95n) / 100n; // 5% slippage
       const hash = await writeContractAsync({
         address: tokenAddr,
         abi: MEME_TOKEN_ABI,
         functionName: "buy",
-        args: [minTokens],
-        value: buyEthBig,
+        args: [cureAmountBig, minTokens],
         maxFeePerGas:         fees.maxFeePerGas,
         maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
       });
@@ -95,6 +132,7 @@ export default function TokenPage() {
       setTxStatus("success");
       setBuyInput("");
       refetch();
+      refetchCureBal();
     } catch (e: unknown) {
       const err = e as { shortMessage?: string; message?: string };
       const msg = err.shortMessage ?? err.message ?? "Transaction failed";
@@ -106,14 +144,16 @@ export default function TokenPage() {
 
   async function handleSell() {
     if (!publicClient || sellAmtBig === 0n) return;
-    setTxStatus("pending"); resetTx(); setTxStatus("pending");
+    resetTx();
+    setTxStatus("pending");
     try {
       const fees = await publicClient.estimateFeesPerGas();
+      const minCure = (estimatedCure * 95n) / 100n; // 5% slippage
       const hash = await writeContractAsync({
         address: tokenAddr,
         abi: MEME_TOKEN_ABI,
         functionName: "sell",
-        args: [sellAmtBig],
+        args: [sellAmtBig, minCure],
         maxFeePerGas:         fees.maxFeePerGas,
         maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
       });
@@ -122,6 +162,7 @@ export default function TokenPage() {
       setTxStatus("success");
       setSellInput("");
       refetch();
+      refetchCureBal();
     } catch (e: unknown) {
       const err = e as { shortMessage?: string; message?: string };
       const msg = err.shortMessage ?? err.message ?? "Transaction failed";
@@ -131,7 +172,7 @@ export default function TokenPage() {
     }
   }
 
-  const busy = txStatus === "pending";
+  const busy = txStatus === "approving" || txStatus === "pending";
 
   return (
     <div className="min-h-screen bg-[#111827] text-white p-6">
@@ -182,9 +223,9 @@ export default function TokenPage() {
           {/* Stats grid */}
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: "Spot Price",   value: `${Number(spotPrice).toLocaleString()} wei` },
-              { label: "ETH Raised",   value: `${parseFloat(formatEther(ethRaised)).toFixed(5)} ETH` },
-              { label: "Tokens Sold",  value: `${(parseFloat(formatUnits(tokensSold, 18)) / 1_000_000).toFixed(2)}M` },
+              { label: "Spot Price",    value: `${(parseFloat(formatUnits(spotPrice, 18)) * 1_000_000).toPrecision(6)} CURE / 1M tokens` },
+              { label: "CURE Raised",   value: `${parseFloat(formatUnits(cureRaised, 18)).toFixed(4)} CURE` },
+              { label: "Tokens Sold",   value: `${(parseFloat(formatUnits(tokensSold, 18)) / 1_000_000).toFixed(2)}M` },
             ].map((s) => (
               <div
                 key={s.label}
@@ -201,7 +242,7 @@ export default function TokenPage() {
             <div className="flex justify-between text-xs text-slate-400 mb-1.5">
               <span>Graduation Progress</span>
               <span>
-                {pct.toFixed(2)}% · {parseFloat(formatEther(ethRaised)).toFixed(5)} / 0.1 ETH
+                {pct.toFixed(2)}% · {parseFloat(formatUnits(cureRaised, 18)).toFixed(4)} / 1000 CURE
               </span>
             </div>
             <div className="h-3 rounded-full bg-slate-700 overflow-hidden">
@@ -258,13 +299,13 @@ export default function TokenPage() {
                 <div className="flex flex-col gap-4">
                   <div>
                     <label className="block text-xs text-slate-400 mb-1.5 font-medium">
-                      ETH to spend
+                      CURE to spend
                     </label>
                     <input
                       type="number"
                       step="any"
                       min="0"
-                      placeholder="0.001"
+                      placeholder="100"
                       value={buyInput}
                       onChange={(e) => { setBuyInput(e.target.value); resetTx(); }}
                       disabled={busy}
@@ -285,19 +326,35 @@ export default function TokenPage() {
                   )}
 
                   {isConnected && (
-                    <p className="text-xs text-slate-500">
-                      Your balance:{" "}
-                      {parseFloat(formatUnits(myBalance, 18)).toLocaleString()} {symbol}
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-slate-500">
+                        Your CURE balance:{" "}
+                        {parseFloat(formatUnits(cureBal, 18)).toLocaleString(undefined, { maximumFractionDigits: 4 })} CURE
+                      </p>
+                      {cureBal === 0n && (
+                        <Link
+                          href="/swap"
+                          className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
+                        >
+                          Get CURE on Swap →
+                        </Link>
+                      )}
+                    </div>
                   )}
 
                   <button
                     onClick={handleBuy}
-                    disabled={!isConnected || busy || buyEthBig === 0n || estimatedTokens === 0n}
+                    disabled={!isConnected || busy || cureAmountBig === 0n || estimatedTokens === 0n}
                     className="w-full rounded-xl bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed py-3 text-sm font-semibold transition-colors flex items-center justify-center gap-2"
                   >
                     {busy && <Spinner />}
-                    {busy ? "Buying…" : !isConnected ? "Connect Wallet" : `Buy ${symbol}`}
+                    {txStatus === "approving"
+                      ? "Approving CURE…"
+                      : txStatus === "pending"
+                      ? "Buying…"
+                      : !isConnected
+                      ? "Connect Wallet"
+                      : `Buy ${symbol}`}
                   </button>
                 </div>
               ) : (
@@ -318,12 +375,12 @@ export default function TokenPage() {
                     />
                   </div>
 
-                  {estimatedETH > 0n && (
+                  {estimatedCure > 0n && (
                     <div className="rounded-xl bg-slate-900/60 border border-slate-700/40 px-4 py-3 flex justify-between items-center text-sm">
                       <span className="text-slate-400">You receive ~</span>
                       <span className="font-semibold text-lg">
-                        {parseFloat(formatEther(estimatedETH)).toFixed(6)}{" "}
-                        <span className="text-red-400 text-sm">ETH</span>
+                        {parseFloat(formatUnits(estimatedCure, 18)).toFixed(6)}{" "}
+                        <span className="text-red-400 text-sm">CURE</span>
                       </span>
                     </div>
                   )}
@@ -358,7 +415,7 @@ export default function TokenPage() {
               )}
 
               {/* Fee note */}
-              <p className="text-xs text-slate-600 mt-3 text-center">1% fee · 5% slippage tolerance</p>
+              <p className="text-xs text-slate-600 mt-3 text-center">1% fee · 5% slippage tolerance · settled in CURE</p>
 
               {/* Tx feedback */}
               {txStatus === "success" && txHash && (
