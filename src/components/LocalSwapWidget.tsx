@@ -40,50 +40,64 @@ function TokenAvatar({ symbol, color, size = 28 }: { symbol: string; color: stri
   );
 }
 
+type PairKey = "CURE_BAO" | "BAO_WETH";
+
 export default function LocalSwapWidget() {
-  // useAccount().chainId reflects the wallet's actual current chain.
-  // useChainId() reflects wagmi's configured default and can stay on the
-  // first chain (Hardhat 31337) until a wallet is connected.
   const { address, isConnected, chainId: walletChainId } = useAccount();
   const chainId = walletChainId;
   const isArbitrumSepolia = chainId === 421614;
   const deployment = isArbitrumSepolia ? arbitrumSepoliaDeployment : localDeployment;
   const networkLabel = isArbitrumSepolia ? "Arbitrum Sepolia" : "Hardhat Local";
 
-  const CURE_ADDRESS = deployment.MockCURE as `0x${string}`;
-  const BAO_ADDRESS = deployment.MockBAO as `0x${string}`;
-  const SWAP_ADDRESS = deployment.SimpleSwap as `0x${string}`;
+  const CURE_ADDRESS = (deployment.MockCURE ?? "0x0000000000000000000000000000000000000000") as `0x${string}`;
+  const BAO_ADDRESS  = (deployment.MockBAO  ?? "0x0000000000000000000000000000000000000000") as `0x${string}`;
+  const dep = deployment as Record<string, unknown>;
+  const WETH_ADDRESS = ((dep.MockWETH as string | undefined) ?? "0x0000000000000000000000000000000000000000") as `0x${string}`;
+  const SWAP_CURE_BAO_ADDRESS  = (deployment.SimpleSwap ?? "0x0000000000000000000000000000000000000000") as `0x${string}`;
+  const SWAP_BAO_WETH_ADDRESS  = ((dep.SimpleSwapBAOWETH as string | undefined) ?? "0x0000000000000000000000000000000000000000") as `0x${string}`;
   const ZERO = "0x0000000000000000000000000000000000000000";
-  const deployed = CURE_ADDRESS !== ZERO && SWAP_ADDRESS !== ZERO;
-
-  console.log("[LocalSwapWidget]", { chainId, isArbitrumSepolia, CURE_ADDRESS, BAO_ADDRESS, SWAP_ADDRESS });
 
   const TOKENS = [
     { symbol: "CURE", name: "Mock CURE", address: CURE_ADDRESS, decimals: 18, color: "#7c3aed" },
     { symbol: "BAO",  name: "Mock BAO",  address: BAO_ADDRESS,  decimals: 18, color: "#2563eb" },
+    { symbol: "WETH", name: "Wrapped Ether", address: WETH_ADDRESS, decimals: 18, color: "#16a34a" },
   ] as const;
   type Token = (typeof TOKENS)[number];
+
+  const PAIRS: Record<PairKey, { label: string; tokenAIdx: number; tokenBIdx: number; swapAddress: `0x${string}` }> = {
+    CURE_BAO: { label: "CURE / BAO", tokenAIdx: 0, tokenBIdx: 1, swapAddress: SWAP_CURE_BAO_ADDRESS },
+    BAO_WETH: { label: "BAO / WETH", tokenAIdx: 1, tokenBIdx: 2, swapAddress: SWAP_BAO_WETH_ADDRESS },
+  };
 
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
 
-  // Store indices, not token objects — token objects contain addresses that change
-  // when the chain switches, but useState captures the value at mount time only.
-  const [fromIndex, setFromIndex] = useState(0);
-  const [toIndex, setToIndex]     = useState(1);
-  const fromToken = TOKENS[fromIndex];
-  const toToken   = TOKENS[toIndex];
+  const [pairKey, setPairKey] = useState<PairKey>("CURE_BAO");
+  const [fromIsA, setFromIsA] = useState(true); // true = selling tokenA, false = selling tokenB
   const [inputAmount, setInputAmount] = useState("");
   const [txStatus, setTxStatus] = useState<"idle"|"approving"|"swapping"|"success"|"error">("idle");
   const [txHash, setTxHash]     = useState<string | null>(null);
   const [txError, setTxError]   = useState<string | null>(null);
   const [faucetStatus, setFaucetStatus] = useState<"idle"|"minting"|"success"|"error">("idle");
   const [faucetError, setFaucetError]   = useState<string | null>(null);
+  const [wethFaucetStatus, setWethFaucetStatus] = useState<"idle"|"minting"|"success"|"error">("idle");
+  const [wethFaucetError, setWethFaucetError]   = useState<string | null>(null);
+
+  const activePair = PAIRS[pairKey];
+  const SWAP_ADDRESS = activePair.swapAddress;
+  const tokenA = TOKENS[activePair.tokenAIdx] as Token;
+  const tokenB = TOKENS[activePair.tokenBIdx] as Token;
+  const fromToken = fromIsA ? tokenA : tokenB;
+  const toToken   = fromIsA ? tokenB : tokenA;
+
+  const deployed = CURE_ADDRESS !== ZERO && SWAP_CURE_BAO_ADDRESS !== ZERO;
+  const baoWethDeployed = WETH_ADDRESS !== ZERO && SWAP_BAO_WETH_ADDRESS !== ZERO;
 
   const parsedAmount = parseFloat(inputAmount);
   const validAmount  = !isNaN(parsedAmount) && parsedAmount > 0;
   const busy = txStatus === "approving" || txStatus === "swapping";
 
+  // Reserves for active pair
   const { data: reserves, refetch: refetchReserves } = useReadContracts({
     contracts: [
       { address: SWAP_ADDRESS, abi: SWAP_ABI, functionName: "reserveA" },
@@ -92,8 +106,8 @@ export default function LocalSwapWidget() {
     query: { enabled: deployed, refetchInterval: 8000 },
   });
 
-  const reserveCURE = (reserves?.[0]?.result ?? 0n) as bigint;
-  const reserveBAO  = (reserves?.[1]?.result ?? 0n) as bigint;
+  const reserveA = (reserves?.[0]?.result ?? 0n) as bigint;
+  const reserveB = (reserves?.[1]?.result ?? 0n) as bigint;
 
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: fromToken.address,
@@ -103,22 +117,26 @@ export default function LocalSwapWidget() {
     query: { enabled: deployed && !!address },
   });
 
+  // Balances: CURE, BAO, WETH
   const { data: balances, refetch: refetchBalances } = useReadContracts({
     contracts: [
       { address: CURE_ADDRESS, abi: erc20Abi, functionName: "balanceOf", args: [address!] },
       { address: BAO_ADDRESS,  abi: erc20Abi, functionName: "balanceOf", args: [address!] },
+      { address: WETH_ADDRESS, abi: erc20Abi, functionName: "balanceOf", args: [address!] },
     ],
     query: { enabled: deployed && !!address },
   });
 
   const cureBal = (balances?.[0]?.result ?? 0n) as bigint;
   const baoBal  = (balances?.[1]?.result ?? 0n) as bigint;
+  const wethBal = (balances?.[2]?.result ?? 0n) as bigint;
 
+  // Output calculation — generic: rIn/rOut depend on sell direction
   const outputAmount: bigint | null = (() => {
     if (!validAmount) return null;
     try {
       const amountIn = parseUnits(inputAmount, fromToken.decimals);
-      const [rIn, rOut] = fromToken.symbol === "CURE" ? [reserveCURE, reserveBAO] : [reserveBAO, reserveCURE];
+      const [rIn, rOut] = fromIsA ? [reserveA, reserveB] : [reserveB, reserveA];
       const out = ammAmountOut(amountIn, rIn, rOut);
       return out > 0n ? out : null;
     } catch { return null; }
@@ -128,11 +146,20 @@ export default function LocalSwapWidget() {
   const rate = outputFormatted !== null && validAmount ? outputFormatted / parsedAmount : null;
 
   function handleFlip() {
-    setFromIndex(toIndex);
-    setToIndex(fromIndex);
+    setFromIsA(!fromIsA);
     setInputAmount("");
     setTxStatus("idle");
     setTxError(null);
+  }
+
+  function handlePairSwitch(key: PairKey) {
+    if (key === pairKey) return;
+    setPairKey(key);
+    setFromIsA(true);
+    setInputAmount("");
+    setTxStatus("idle");
+    setTxError(null);
+    setTxHash(null);
   }
 
   async function handleFaucet() {
@@ -140,10 +167,11 @@ export default function LocalSwapWidget() {
     setFaucetStatus("minting");
     setFaucetError(null);
     try {
+      const fees = await publicClient.estimateFeesPerGas();
       const amount = parseUnits("10000", 18);
-      const tx1 = await writeContractAsync({ address: CURE_ADDRESS, abi: MINT_ABI, functionName: "mint", args: [address, amount] });
+      const tx1 = await writeContractAsync({ address: CURE_ADDRESS, abi: MINT_ABI, functionName: "mint", args: [address, amount], maxFeePerGas: fees.maxFeePerGas, maxPriorityFeePerGas: fees.maxPriorityFeePerGas });
       await publicClient.waitForTransactionReceipt({ hash: tx1 });
-      const tx2 = await writeContractAsync({ address: BAO_ADDRESS,  abi: MINT_ABI, functionName: "mint", args: [address, amount] });
+      const tx2 = await writeContractAsync({ address: BAO_ADDRESS, abi: MINT_ABI, functionName: "mint", args: [address, amount], maxFeePerGas: fees.maxFeePerGas, maxPriorityFeePerGas: fees.maxPriorityFeePerGas });
       await publicClient.waitForTransactionReceipt({ hash: tx2 });
       setFaucetStatus("success");
       await refetchBalances();
@@ -155,11 +183,31 @@ export default function LocalSwapWidget() {
     }
   }
 
+  async function handleWethFaucet() {
+    if (!address || !publicClient) return;
+    setWethFaucetStatus("minting");
+    setWethFaucetError(null);
+    try {
+      const fees = await publicClient.estimateFeesPerGas();
+      const amount = parseUnits("1", 18); // 1 WETH
+      const tx = await writeContractAsync({ address: WETH_ADDRESS, abi: MINT_ABI, functionName: "mint", args: [address, amount], maxFeePerGas: fees.maxFeePerGas, maxPriorityFeePerGas: fees.maxPriorityFeePerGas });
+      await publicClient.waitForTransactionReceipt({ hash: tx });
+      setWethFaucetStatus("success");
+      await refetchBalances();
+    } catch (e: unknown) {
+      const err = e as { shortMessage?: string; message?: string };
+      const msg = err.shortMessage ?? err.message ?? "Mint failed";
+      if (!msg.toLowerCase().includes("rejected") && !msg.toLowerCase().includes("denied")) setWethFaucetError(msg);
+      setWethFaucetStatus("error");
+    }
+  }
+
   async function handleSwap() {
     if (!validAmount || !address || !publicClient || outputAmount === null) return;
     setTxHash(null);
     setTxError(null);
     try {
+      const fees = await publicClient.estimateFeesPerGas();
       const amountIn = parseUnits(inputAmount, fromToken.decimals);
       const minOut = (outputAmount * 99n) / 100n;
 
@@ -170,6 +218,8 @@ export default function LocalSwapWidget() {
           abi: erc20Abi,
           functionName: "approve",
           args: [SWAP_ADDRESS, maxUint256],
+          maxFeePerGas:         fees.maxFeePerGas,
+          maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
         });
         await publicClient.waitForTransactionReceipt({ hash: approveTx });
         await refetchAllowance();
@@ -180,6 +230,8 @@ export default function LocalSwapWidget() {
         abi: SWAP_ABI,
         functionName: "swap",
         args: [fromToken.address, amountIn, minOut],
+        maxFeePerGas:         fees.maxFeePerGas,
+        maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
       });
       await publicClient.waitForTransactionReceipt({ hash: swapTx });
       setTxHash(swapTx);
@@ -198,9 +250,10 @@ export default function LocalSwapWidget() {
 
   function getButton() {
     if (!deployed)    return { label: "Contracts not deployed", disabled: true };
+    if (pairKey === "BAO_WETH" && !baoWethDeployed) return { label: "BAO-WETH pool not deployed", disabled: true };
     if (!isConnected) return { label: "Connect Wallet", disabled: true };
     if (!validAmount) return { label: "Enter Amount", disabled: true };
-    if (reserveCURE === 0n && reserveBAO === 0n) return { label: "Pool has no liquidity", disabled: true };
+    if (reserveA === 0n && reserveB === 0n) return { label: "Pool has no liquidity", disabled: true };
     if (outputAmount === null) return { label: "Insufficient liquidity", disabled: true };
     if (txStatus === "approving") return { label: "Approving…", disabled: true };
     if (txStatus === "swapping")  return { label: "Swapping…", disabled: true };
@@ -220,32 +273,65 @@ export default function LocalSwapWidget() {
           </span>
         </div>
 
-        {deployed && (reserveCURE > 0n || reserveBAO > 0n) && (
+        {/* Pair selector */}
+        <div className="flex rounded-lg border border-slate-700 bg-slate-800/50 p-1 gap-1">
+          {(Object.entries(PAIRS) as [PairKey, typeof PAIRS[PairKey]][]).map(([key, pair]) => (
+            <button
+              key={key}
+              onClick={() => handlePairSwitch(key)}
+              className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                pairKey === key
+                  ? "bg-purple-600 text-white"
+                  : "text-slate-400 hover:text-white"
+              }`}>
+              {pair.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Pool reserves */}
+        {deployed && (reserveA > 0n || reserveB > 0n) && (
           <div className="rounded-lg bg-slate-800/60 border border-slate-700/40 px-3 py-2 flex justify-between text-xs text-slate-500">
-            <span>Pool: {parseFloat(formatUnits(reserveCURE, 18)).toLocaleString()} CURE</span>
-            <span>{parseFloat(formatUnits(reserveBAO, 18)).toLocaleString()} BAO</span>
+            <span>Pool: {parseFloat(formatUnits(reserveA, 18)).toLocaleString()} {tokenA.symbol}</span>
+            <span>{parseFloat(formatUnits(reserveB, 18)).toLocaleString(undefined, { maximumFractionDigits: 6 })} {tokenB.symbol}</span>
           </div>
         )}
 
+        {/* Balances + faucet buttons */}
         {isConnected && deployed && (
           <div className="rounded-lg bg-slate-800/60 border border-slate-700/40 px-3 py-2 flex items-center justify-between gap-2">
-            <div className="text-xs text-slate-500 flex gap-3">
+            <div className="text-xs text-slate-500 flex gap-3 flex-wrap">
               <span>{parseFloat(formatUnits(cureBal, 18)).toLocaleString(undefined, { maximumFractionDigits: 2 })} CURE</span>
               <span>{parseFloat(formatUnits(baoBal, 18)).toLocaleString(undefined, { maximumFractionDigits: 2 })} BAO</span>
+              <span>{parseFloat(formatUnits(wethBal, 18)).toLocaleString(undefined, { maximumFractionDigits: 4 })} WETH</span>
             </div>
-            <button
-              onClick={handleFaucet}
-              disabled={faucetStatus === "minting"}
-              className="text-xs px-2 py-1 rounded-md border border-slate-600 bg-slate-700 hover:bg-slate-600 text-slate-300 disabled:opacity-40 transition-colors">
-              {faucetStatus === "minting" ? "Minting…" : faucetStatus === "success" ? "Minted!" : "Get test tokens"}
-            </button>
+            <div className="flex gap-1 shrink-0">
+              <button
+                onClick={handleFaucet}
+                disabled={faucetStatus === "minting"}
+                className="text-xs px-2 py-1 rounded-md border border-slate-600 bg-slate-700 hover:bg-slate-600 text-slate-300 disabled:opacity-40 transition-colors">
+                {faucetStatus === "minting" ? "Minting…" : faucetStatus === "success" ? "Minted!" : "Get tokens"}
+              </button>
+              {baoWethDeployed && (
+                <button
+                  onClick={handleWethFaucet}
+                  disabled={wethFaucetStatus === "minting"}
+                  className="text-xs px-2 py-1 rounded-md border border-green-700/60 bg-green-900/30 hover:bg-green-900/50 text-green-400 disabled:opacity-40 transition-colors">
+                  {wethFaucetStatus === "minting" ? "Minting…" : wethFaucetStatus === "success" ? "Minted!" : "Get WETH"}
+                </button>
+              )}
+            </div>
           </div>
         )}
 
-        {faucetStatus === "error" && faucetError && (
+        {(faucetStatus === "error" && faucetError) && (
           <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-xs text-red-400 break-words">{faucetError}</div>
         )}
+        {(wethFaucetStatus === "error" && wethFaucetError) && (
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-xs text-red-400 break-words">{wethFaucetError}</div>
+        )}
 
+        {/* From token */}
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1">
             <label className="text-xs text-slate-500 font-medium">From</label>
@@ -270,6 +356,7 @@ export default function LocalSwapWidget() {
           </button>
         </div>
 
+        {/* To token */}
         <div className="flex flex-col gap-1">
           <label className="text-xs text-slate-500 font-medium">To (estimated)</label>
           <div className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/80 px-4 py-3">
