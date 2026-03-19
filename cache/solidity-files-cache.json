@@ -452,6 +452,122 @@
       "artifacts": [
         "SimpleSwap"
       ]
+    },
+    "/Users/ziqi/xcure/contracts/BondingCurve.sol": {
+      "lastModificationDate": 1773842889515,
+      "contentHash": "98801f5520e78cb47ab9d5eb26f579c5",
+      "sourceName": "contracts/BondingCurve.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/ERC20.sol",
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "MemeToken"
+      ]
+    },
+    "/Users/ziqi/xcure/contracts/MemeFactory.sol": {
+      "lastModificationDate": 1773842899928,
+      "contentHash": "34d9be591fa508ce4d94e129cc0d66b3",
+      "sourceName": "contracts/MemeFactory.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./BondingCurve.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "MemeFactory"
+      ]
+    },
+    "/Users/ziqi/xcure/contracts/MockWETH.sol": {
+      "lastModificationDate": 1773822911520,
+      "contentHash": "c2503d7c7931357fb19db00e65a383d9",
+      "sourceName": "contracts/MockWETH.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/ERC20.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "MockWETH"
+      ]
     }
   }
 }
