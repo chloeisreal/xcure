@@ -37,7 +37,8 @@ interface Props {
 }
 
 export default function ValuationReport({ data, isLoading, loadingMethods = {} }: Props) {
-  const { valuation, currentPrice, name, symbol, type } = data;
+  const { valuation, currentPrice, name, nameEn, symbol, type } = data;
+  const displayName = nameEn || name;
 
   return (
     <div className="space-y-6">
@@ -45,7 +46,7 @@ export default function ValuationReport({ data, isLoading, loadingMethods = {} }
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-[#111827] border border-slate-700">
         <div>
           <h2 className="text-xl font-semibold text-white">
-            {name} <span className="text-blue-400">({symbol})</span>
+            {displayName} <span className="text-blue-400">({symbol})</span>
           </h2>
           <p className="text-sm text-slate-400 capitalize">{type} • {data.currency}</p>
         </div>

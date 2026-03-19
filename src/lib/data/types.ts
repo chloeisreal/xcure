@@ -3,6 +3,17 @@ export type CompanyType = 'listed' | 'ipo' | 'preipo' | 'token';
 export type ListingType = '18A' | '普通上市' | 'SPAC' | 'Direct Listing';
 export type ClinicalPhase = 'Preclinical' | 'Phase I' | 'Phase II' | 'Phase III' | 'Approved';
 export type Exchange = 'NASDAQ' | 'NYSE' | 'HKEX' | 'LSE';
+export type CompanySector = 'biotech' | 'medical-device' | 'healthcare' | 'other';
+export type Currency = 'USD' | 'CNY' | 'HKD' | 'EUR';
+
+export const CURRENCY_SYMBOLS: Record<Currency, string> = {
+  'USD': '$',
+  'CNY': '¥',
+  'HKD': 'HK$',
+  'EUR': '€',
+};
+
+export const USD_TO_CNY = 7.2; // Approximate exchange rate
 
 // Base Company Interface
 export interface BaseCompany {
@@ -33,6 +44,16 @@ export interface IPOCompany extends BaseCompany {
   listingType: ListingType;
   filingDate: string;
   status: 'Pending' | 'Approved' | 'Withdrawn' | 'Listed';
+  sector: CompanySector;
+  financials?: {
+    revenue?: number;      // In local currency
+    revenueCurrency?: Currency;
+    grossMargin?: number;
+    netLoss?: number;
+    cash?: number;
+    debt?: number;
+    latestYear?: string;
+  };
   prospectus: {
     description: string;
     pipeline: ClinicalTrial[];
@@ -202,6 +223,7 @@ export interface ValuationResponse {
   data: {
     symbol: string;
     name: string;
+    nameEn?: string;
     type: CompanyType;
     currentPrice?: number;
     currency?: string;

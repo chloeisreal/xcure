@@ -1,4 +1,4 @@
-import type { rNPVResult, ClinicalPhase, ClinicalTrial } from '../data/types';
+import type { rNPVResult, ClinicalPhase, ClinicalTrial, Currency, CompanySector } from '../data/types';
 
 const PHASE_SUCCESS_RATES: Record<ClinicalPhase, number> = {
   'Preclinical': 0.10,
@@ -6,6 +6,14 @@ const PHASE_SUCCESS_RATES: Record<ClinicalPhase, number> = {
   'Phase II': 0.35,
   'Phase III': 0.55,
   'Approved': 1.0,
+};
+
+const MEDICAL_DEVICE_PEAK_SALES: Record<string, number> = {
+  'Cardiovascular': 2000000000,
+  'Respiratory': 1500000000,
+  'Diagnostic': 1000000000,
+  'Surgical': 1200000000,
+  'default': 800000000,
 };
 
 const PEAK_SALES_ESTIMATES: Record<string, number> = {
@@ -21,7 +29,22 @@ const PATENT_YEARS = 15;
 const DISCOUNT_RATE = 0.12;
 const COMMERCIALIZATION_YEARS = 5;
 
-export function getSuccessRate(phase: ClinicalPhase): number {
+export const CURRENCY_TO_USD: Record<Currency, number> = {
+  'USD': 1.0,
+  'CNY': 0.14,  // ~7.2 CNY per USD
+  'HKD': 0.128, // ~7.8 HKD per USD
+  'EUR': 1.08,
+};
+
+export function convertToUSD(amount: number, currency: Currency): number {
+  return amount * CURRENCY_TO_USD[currency];
+}
+
+export function getSuccessRate(phase: ClinicalPhase, sector?: CompanySector): number {
+  // Medical devices have higher success rates since products are already approved
+  if (sector === 'medical-device') {
+    return 1.0;
+  }
   return PHASE_SUCCESS_RATES[phase] || 0.1;
 }
 
@@ -47,9 +70,15 @@ export function calculateTrialNPV(trial: ClinicalTrial, currentYear: number = 20
   const peakSales = getPeakSalesEstimate(trial.indication);
   
   let launchYear = currentYear + 3;
-  if (trial.phase === 'Phase III') launchYear = currentYear + 2;
-  if (trial.phase === 'Phase II') launchYear = currentYear + 4;
-  if (trial.phase === 'Phase I') launchYear = currentYear + 5;
+  if (trial.phase === 'Approved') {
+    launchYear = currentYear; // Already launched
+  } else if (trial.phase === 'Phase III') {
+    launchYear = currentYear + 2;
+  } else if (trial.phase === 'Phase II') {
+    launchYear = currentYear + 4;
+  } else if (trial.phase === 'Phase I') {
+    launchYear = currentYear + 5;
+  }
   
   const yearsToLaunch = launchYear - currentYear;
   
@@ -180,4 +209,74 @@ export function estimateBiotechNPV(
   const mockMarketCap = revenue * 5;
   
   return calculatePortfolioNPV(trials, mockMarketCap);
+}
+
+export interface MedicalDeviceValuationParams {
+  revenue: number;           // Current annual revenue in local currency
+  revenueCurrency: Currency;
+  grossMargin: number;       // Gross margin as percentage (e.g., 0.5 for 50%)
+  growthRate: number;         // Expected annual growth rate (e.g., 0.2 for 20%)
+  cash: number;               // Cash in local currency
+  debt: number;               // Debt in local currency
+  years: number;              // Forecast years
+  sector?: CompanySector;
+}
+
+export function calculateMedicalDeviceNPV(params: MedicalDeviceValuationParams): rNPVResult {
+  const {
+    revenue,
+    revenueCurrency,
+    grossMargin,
+    growthRate = 0.15,
+    cash = 0,
+    debt = 0,
+    years = 5,
+    sector = 'medical-device'
+  } = params;
+
+  const discountRate = 0.10; // Lower discount rate for established medical devices
+  
+  let revenueInUSD = convertToUSD(revenue, revenueCurrency);
+  let cashInUSD = convertToUSD(cash, revenueCurrency);
+  let debtInUSD = convertToUSD(debt, revenueCurrency);
+  
+  // Use revenue multiple approach for medical devices
+  // Typical medical device companies trade at 3-8x revenue
+  const revenueMultiple = 5.0; // Conservative 5x revenue
+  const terminalMultiple = 6.0;
+  
+  let totalNPV = 0;
+  
+  for (let year = 1; year <= years; year++) {
+    const projectedRevenue = revenueInUSD * Math.pow(1 + growthRate, year);
+    const discountFactor = Math.pow(1 + discountRate, year);
+    totalNPV += (projectedRevenue * revenueMultiple) / discountFactor;
+  }
+  
+  // Terminal value
+  const terminalRevenue = revenueInUSD * Math.pow(1 + growthRate, years);
+  const terminalValue = terminalRevenue * terminalMultiple;
+  const terminalDiscountFactor = Math.pow(1 + discountRate, years);
+  totalNPV += terminalValue / terminalDiscountFactor;
+  
+  // Adjust for cash and debt
+  const enterpriseValue = totalNPV + cashInUSD - debtInUSD;
+  
+  // For early-stage medical devices, use 85% success probability
+  // This reflects the risk of commercial execution
+  const successProbability = 0.85;
+  
+  const pipelineValue = enterpriseValue * successProbability;
+  const upside = 0;
+  
+  return {
+    method: 'rNPV',
+    fairValue: Math.round(enterpriseValue),
+    upside: `${upside >= 0 ? '+' : ''}${upside.toFixed(1)}%`,
+    pipelineValue: Math.round(pipelineValue),
+    successProbability,
+    trialContributions: {
+      'commercialized-products': Math.round(pipelineValue),
+    },
+  };
 }

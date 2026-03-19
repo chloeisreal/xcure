@@ -15,6 +15,7 @@ export interface CompanySearchResult {
   type: 'ipo' | 'preipo' | 'token' | 'listed';
   exchange?: string;
   id: string;
+  _score?: number;
 }
 
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -137,6 +138,62 @@ export async function searchCompanies(query: string, limit: number = 10): Promis
     getTokenizedBiotech(),
   ]);
 
+  function getRelevanceScore(
+    q: string,
+    company: { name?: string; nameEn?: string; id: string; fullName?: string; symbol?: string }
+  ): number {
+    const name = (company.name || company.fullName || '').toLowerCase();
+    const nameEn = (company.nameEn || '').toLowerCase();
+    const symbol = (company.id || company.symbol || '').toLowerCase();
+    
+    // Exact match id/symbol = 100 points
+    if (symbol === q) return 100;
+    
+    // Exact match English name = 90 points
+    if (nameEn === q) return 90;
+    
+    // Exact match Chinese name = 85 points
+    if (name === q) return 85;
+    
+    // Prefix match English name = 70 points
+    if (nameEn.startsWith(q)) return 70;
+    
+    // Prefix match Chinese name = 65 points
+    if (name.startsWith(q)) return 65;
+    
+    // First word match in English name = 50 points
+    const firstWord = nameEn.split(' ')[0]?.toLowerCase();
+    if (firstWord && firstWord === q) return 50;
+    
+    // Word boundary match = 40 points
+    const nameWords = name.split(/[,，、\s()（）]+/).filter(w => w.length > 1);
+    const nameEnWords = nameEn.split(/[,，、\s()（）]+/).filter(w => w.length > 1);
+    if (nameWords.some(w => w === q) || nameEnWords.some(w => w === q)) return 40;
+    
+    // Loose contains match = 20 points
+    if (name.includes(q) || nameEn.includes(q)) return 20;
+    
+    // Partial match (e.g., "junsai" matches "Junzai") = 15 points
+    if (q.length >= 3) {
+      const qLower = q.toLowerCase();
+      let matched = 0;
+      let nameEnIdx = 0;
+      for (const char of qLower) {
+        const idx = nameEn.indexOf(char, nameEnIdx);
+        if (idx !== -1) {
+          matched++;
+          nameEnIdx = idx + 1;
+        }
+      }
+      if (matched >= qLower.length * 0.7) return 15;
+    }
+    
+    // Partial match (e.g., "juncell" matches "cell") = 5 points (lowest)
+    if (q.length >= 4 && (name.includes(q) || nameEn.includes(q))) return 5;
+    
+    return 0;
+  }
+
   function addIfMatch(
     company: { name: string; nameEn?: string; id: string; hkexCode?: string },
     type: 'ipo' | 'preipo' | 'token',
@@ -148,14 +205,9 @@ export async function searchCompanies(query: string, limit: number = 10): Promis
     
     if (seen.has(matchKey)) return;
     
-    const isMatch = 
-      name.toLowerCase().includes(normalizedQuery) ||
-      (nameEn && nameEn.toLowerCase().includes(normalizedQuery)) ||
-      normalizedQuery.includes(name.toLowerCase()) ||
-      normalizedQuery.includes(nameEn.toLowerCase()) ||
-      (nameEn && normalizedQuery.includes(nameEn.toLowerCase()));
+    const score = getRelevanceScore(normalizedQuery, company);
     
-    if (isMatch) {
+    if (score > 0) {
       seen.add(matchKey);
       results.push({
         symbol: (company as any).hkexCode || (company as any).symbol || company.id,
@@ -164,6 +216,7 @@ export async function searchCompanies(query: string, limit: number = 10): Promis
         type,
         exchange,
         id: company.id,
+        _score: score,
       });
     }
   }
@@ -179,6 +232,9 @@ export async function searchCompanies(query: string, limit: number = 10): Promis
   for (const token of tokens) {
     addIfMatch(token, 'token');
   }
+
+  // Sort by relevance score
+  results.sort((a, b) => (b._score || 0) - (a._score || 0));
 
   return results.slice(0, limit);
 }

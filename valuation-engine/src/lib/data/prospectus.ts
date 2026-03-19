@@ -108,30 +108,6 @@ async function downloadPDF(url: string, localPath: string): Promise<boolean> {
 }
 
 export function getLocalProspectusPath(stockCode: string): string | null {
-  // Try exact match first
-  let localPath = path.join(PROSPECTUS_DIR, `${stockCode}.pdf`);
-  if (fs.existsSync(localPath)) {
-    return localPath;
-  }
-  
-  // Try without .HK suffix for HK stocks
-  if (stockCode.includes('.HK')) {
-    const codeWithoutSuffix = stockCode.replace('.HK', '');
-    localPath = path.join(PROSPECTUS_DIR, `${codeWithoutSuffix}.pdf`);
-    if (fs.existsSync(localPath)) {
-      return localPath;
-    }
-  }
-  
-  // List all PDFs in the directory and try to find a match
-  const files = fs.readdirSync(PROSPECTUS_DIR).filter(f => f.endsWith('.pdf'));
-  for (const file of files) {
-    const baseName = file.replace('.pdf', '');
-    if (baseName.toLowerCase() === stockCode.toLowerCase() ||
-        baseName.toLowerCase().includes(stockCode.toLowerCase())) {
-      return path.join(PROSPECTUS_DIR, file);
-    }
-  }
-  
-  return null;
+  const localPath = path.join(PROSPECTUS_DIR, `${stockCode}.pdf`);
+  return fs.existsSync(localPath) ? localPath : null;
 }

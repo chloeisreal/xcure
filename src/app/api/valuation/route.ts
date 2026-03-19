@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { calculateDCF } from '@/lib/valuation/dcf';
 import { calculateComps } from '@/lib/valuation/comps';
-import { calculatePortfolioNPV } from '@/lib/valuation/rnpv';
+import { calculatePortfolioNPV, calculateMedicalDeviceNPV } from '@/lib/valuation/rnpv';
 import { generateAIReport } from '@/lib/valuation/ai';
 import { getQuote } from '@/lib/data/stocks';
 import { getIPOCompanies, getPreIPOCompanies, getTokenizedBiotech, findTokenBySymbol } from '@/lib/data/local';
 import { findProspectusPDF, getLocalProspectusPath } from '@/lib/data/prospectus';
 import { extractProspectusWithAI } from '@/lib/prospectus/extractor';
-import type { ValuationRequest, ValuationResponse, CompanyType, Valuation, ClinicalPhase } from '@/lib/data/types';
+import type { ValuationRequest, CompanyType, Valuation, ClinicalPhase, CompanySector } from '@/lib/data/types';
+import type { ValuationResponse } from '@/lib/data/types';
 
 type ExtractedTrial = {
   product: string;
@@ -21,6 +22,7 @@ function mapPhase(phase: string): ClinicalPhase {
   if (p.includes('phase ii') || p.includes('phase 2')) return 'Phase II';
   if (p.includes('phase i') || p.includes('phase 1')) return 'Phase I';
   if (p.includes('preclinical')) return 'Preclinical';
+  if (p.includes('approved') || p.includes('已批准') || p.includes('上市') || p.includes('commercialized') || p.includes('商业化')) return 'Approved';
   return 'Phase I';
 }
 
@@ -40,8 +42,16 @@ export async function POST(request: NextRequest): Promise<NextResponse<Valuation
     const dataSources: string[] = [];
     let currentPrice: number | undefined;
     let name = symbol;
+    let nameEn = '';
     let companyType: CompanyType = type;
     let pipeline: any[] = [];
+    let companySector: CompanySector = 'biotech';
+    let financials: any = null;
+    let revenue = 0;
+    let grossMargin = 0.5;
+    let cash = 0;
+    let debt = 0;
+    let revenueCurrency = 'CNY';
     
     if (type === 'listed') {
       const quote = await getQuote(symbol);
@@ -118,16 +128,46 @@ export async function POST(request: NextRequest): Promise<NextResponse<Valuation
         }, { status: 404 });
       }
       name = company.name;
-      pipeline = company.prospectus?.pipeline || [];
+      nameEn = company.nameEn || '';
+      pipeline = (company.prospectus?.pipeline || []).map((p: any) => ({
+        product: p.product,
+        indication: p.indication,
+        phase: mapPhase(p.stage || p.phase || 'Phase I'),
+      }));
       companyType = 'ipo';
       dataSources.push('local');
+      
+      // Extract company sector and financials
+      companySector = (company as any).sector || 'biotech';
+      financials = (company as any).financials;
+      revenue = financials?.revenue || 0;
+      grossMargin = financials?.grossMargin || 0.5;
+      cash = financials?.cash || 0;
+      debt = financials?.debt || 0;
+      revenueCurrency = financials?.revenueCurrency || 'CNY';
 
+      // Try to find and extract prospectus PDF for IPO companies
       const hkexCode = (company as any).hkexCode;
-      if (hkexCode && methods.includes('rnpv')) {
+      if (methods.includes('rnpv') || methods.includes('ai')) {
         try {
-          const localPath = getLocalProspectusPath(hkexCode);
+          // First try to find local PDF by hkexCode or company ID
+          let localPath = hkexCode ? getLocalProspectusPath(hkexCode) : null;
+          if (!localPath) {
+            localPath = getLocalProspectusPath(company.id);
+          }
+          
+          // If no local PDF and we have hkexCode, try to download
+          if (!localPath && hkexCode) {
+            const prospectusInfo = await findProspectusPDF(hkexCode);
+            if (prospectusInfo?.localPath) {
+              localPath = prospectusInfo.localPath;
+            }
+          }
+          
+          // If we have PDF, extract data with AI
           if (localPath) {
-            const extracted = await extractProspectusWithAI(hkexCode, localPath);
+            const extractKey = hkexCode || company.id;
+            const extracted = await extractProspectusWithAI(extractKey, localPath);
             if (extracted && extracted.pipeline.length > 0) {
               pipeline = extracted.pipeline.map((p: ExtractedTrial) => ({
                 product: p.product,
@@ -136,8 +176,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<Valuation
               }));
               dataSources.push('prospectus-ai');
             }
-          } else {
-            await findProspectusPDF(hkexCode);
           }
         } catch (e) {
           console.error('Prospectus extraction error:', e);
@@ -176,9 +214,27 @@ export async function POST(request: NextRequest): Promise<NextResponse<Valuation
       }
     }
     
-    if ((type === 'ipo' || type === 'preipo' || type === 'listed') && methods.includes('rnpv') && pipeline.length > 0) {
-      const rnpvResult = calculatePortfolioNPV(pipeline, currentPrice);
-      if (rnpvResult) {
+    if ((type === 'ipo' || type === 'preipo' || type === 'listed') && methods.includes('rnpv')) {
+      // Check if this is a medical device company with revenue data
+      const isMedicalDevice = companySector === 'medical-device' || (companySector as string) === 'medical-device';
+      const hasRevenue = revenue > 0;
+      
+      if (isMedicalDevice && hasRevenue) {
+        // Use medical device valuation
+        const rnpvResult = calculateMedicalDeviceNPV({
+          revenue,
+          revenueCurrency: revenueCurrency as any,
+          grossMargin,
+          growthRate: 0.15,
+          cash,
+          debt,
+          years: 5,
+          sector: companySector as any,
+        });
+        valuation.rnpv = rnpvResult;
+      } else if (pipeline.length > 0) {
+        // Use traditional biotech rNPV
+        const rnpvResult = calculatePortfolioNPV(pipeline, currentPrice);
         valuation.rnpv = rnpvResult;
       }
     }
@@ -197,6 +253,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Valuation
       data: {
         symbol,
         name,
+        nameEn,
         type: companyType,
         currentPrice,
         currency: 'USD',

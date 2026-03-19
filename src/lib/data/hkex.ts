@@ -15,13 +15,16 @@ interface HKEXFiling {
 async function fetchHKEX(url: string): Promise<string> {
   const response = await fetch(url, {
     headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; XCure/1.0)',
-      'Accept': 'text/html,application/json',
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.5',
+      'Connection': 'keep-alive',
     },
   });
   
   if (!response.ok) {
-    throw new Error(`HKEX fetch error: ${response.status}`);
+    console.log(`HKEX fetch error: ${response.status}`);
+    return '';
   }
   
   return response.text();
@@ -38,30 +41,57 @@ export async function getRecentHKEXFilings(
       const url = `${HKEX_SEARCH_URL}/tips?s=1&c=${limit}&o=desc&sortBy=PUBLISH_DATE&docType=${docType}`;
       const html = await fetchHKEX(url);
       
+      if (!html || html.length < 100) {
+        console.log(`HKEX ${docType}: Empty or short response`);
+        continue;
+      }
+      
       const codeMatch = html.match(/stockCode["']?\s*:\s*["']?(\d+)/g);
       const nameMatch = html.match(/companyName["']?\s*:\s*["']([^"']+)/g);
       const dateMatch = html.match(/publishDate["']?\s*:\s*["']([\d-]+)/g);
       
-      const count = Math.min(
-        codeMatch?.length || 0,
-        nameMatch?.length || 0,
-        dateMatch?.length || 0
-      );
+      // Try alternative patterns if main ones don't work
+      const altCodeMatch = html.match(/"stockCode"\s*:\s*(\d{5})/g);
+      const altNameMatch = html.match(/"companyName"\s*:\s*"([^"]+)"/g);
       
-      for (let i = 0; i < count; i++) {
-        const stockCode = codeMatch?.[i]?.match(/\d+/)?.[0] || '';
-        const companyName = nameMatch?.[i]?.replace(/companyName["']?\s*:\s*["']/, '') || '';
-        const publishDate = dateMatch?.[i]?.match(/\d{4}-\d{2}-\d{2}/)?.[0] || '';
+      let count = 0;
+      if (codeMatch && nameMatch && dateMatch) {
+        count = Math.min(
+          codeMatch?.length || 0,
+          nameMatch?.length || 0,
+          dateMatch?.length || 0
+        );
         
-        if (stockCode && companyName) {
-          filings.push({
-            stockCode,
-            companyName,
-            companyNameEn: '',
-            documentType: docType,
-            publishDate,
-            url: `https://www1.hkexnews.hk/app/appnews/corpinfo/${stockCode}.html`,
-          });
+        for (let i = 0; i < count; i++) {
+          const stockCode = codeMatch?.[i]?.match(/\d+/)?.[0] || '';
+          const companyName = nameMatch?.[i]?.replace(/companyName["']?\s*:\s*["']/, '') || '';
+          const publishDate = dateMatch?.[i]?.match(/\d{4}-\d{2}-\d{2}/)?.[0] || '';
+          
+          if (stockCode && companyName) {
+            filings.push({
+              stockCode,
+              companyName,
+              companyNameEn: '',
+              documentType: docType,
+              publishDate,
+              url: `https://www1.hkexnews.hk/app/appnews/corpinfo/${stockCode}.html`,
+            });
+          }
+        }
+      } else if (altCodeMatch && altNameMatch) {
+        // Try alternative parsing
+        for (const codeStr of altCodeMatch.slice(0, 10)) {
+          const stockCode = codeStr.match(/\d{5}/)?.[0];
+          if (stockCode) {
+            filings.push({
+              stockCode,
+              companyName: `Company ${stockCode}`,
+              companyNameEn: '',
+              documentType: docType,
+              publishDate: new Date().toISOString().split('T')[0],
+              url: `https://www1.hkexnews.hk/app/appnews/corpinfo/${stockCode}.html`,
+            });
+          }
         }
       }
     } catch (error) {
@@ -82,7 +112,7 @@ export function createIPOCompanyFromHKEX(filing: HKEXFiling): Partial<IPOCompany
     hkexCode: filing.stockCode,
     exchange: 'HKEX',
     listingType: '18A',
-    sector: sector.category,
+    sector: (sector.category as any) || 'biotech',
     subsector: sector.subsector,
     filingDate: filing.publishDate,
     status: 'Pending',

@@ -63,7 +63,7 @@ export async function getSECBiotechIPOs(): Promise<Partial<IPOCompany>[]> {
       name: filing.companyName,
       exchange: 'NASDAQ',
       listingType: (filing.formType.includes('F-1') ? 'F-1' : 'S-1') as ListingType,
-      sector: 'Biotechnology',
+      sector: 'biotech',
       subsector: 'Biotech',
       filingDate: filing.filedAt,
       status: 'Pending',

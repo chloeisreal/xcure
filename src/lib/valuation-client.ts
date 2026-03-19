@@ -52,6 +52,7 @@ export interface AIResult {
 export interface ValuationData {
   symbol: string;
   name: string;
+  nameEn?: string;
   type: CompanyType;
   currentPrice?: number;
   currency: string;
@@ -78,13 +79,14 @@ export function useValuation() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ValuationData | null>(null);
 
-  const getValuation = useCallback(async (request: ValuationRequest) => {
+  const getValuation = useCallback(async (request: ValuationRequest, forceRefresh: boolean = false) => {
     setLoading(true);
     setError(null);
     setResult(null);
 
     try {
-      const res = await fetch("/api/valuation", {
+      const url = forceRefresh ? `/api/valuation?_t=${Date.now()}` : "/api/valuation";
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(request),
@@ -147,6 +149,12 @@ export function useValuation() {
 
 export function detectCompanyType(query: string): CompanyType {
   const lower = query.toLowerCase();
+  const trimmed = query.trim();
+  
+  // Hong Kong stock code (5 digits like 00700, 01810)
+  if (/^\d{5}$/.test(trimmed)) {
+    return "listed";
+  }
   
   if (lower.match(/^(vita|bio|hair|lon|psy)\b/i) || lower.includes('vitadao') || lower.includes('bioprotocol')) {
     return "token";
@@ -178,6 +186,8 @@ export function extractSymbol(query: string): string {
   return upper.split(/\s+/)[0];
 }
 
+export type EntityType = 'us-stock' | 'hk-stock' | 'crypto' | 'hk-ipo' | 'preipo' | 'token';
+
 export interface CompanySearchResult {
   symbol: string;
   name: string;
@@ -185,40 +195,63 @@ export interface CompanySearchResult {
   type: CompanyType;
   exchange?: string;
   id: string;
+  price?: number;
+  currency?: 'USD' | 'HKD';
+  _score?: number;
 }
 
 export async function resolveCompanyName(query: string): Promise<CompanySearchResult | null> {
+  const candidates = await searchCompaniesWithCandidates(query);
+  if (candidates && candidates.length > 0) {
+    return candidates[0];
+  }
+  return null;
+}
+
+export async function searchCompaniesWithCandidates(query: string): Promise<CompanySearchResult[]> {
   const trimmed = query.trim();
   
-  if (!trimmed) return null;
+  if (!trimmed) return [];
   
-  if (/^[A-Z]{1,5}$/.test(trimmed.toUpperCase())) {
-    return {
-      symbol: trimmed.toUpperCase(),
-      name: trimmed,
-      type: detectCompanyType(trimmed),
-      id: trimmed.toLowerCase(),
-    };
-  }
-  
+  // Use the new unified search API
   try {
-    const res = await fetch(`/api/companies/search?q=${encodeURIComponent(trimmed)}&limit=1`);
+    const res = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`);
     const data = await res.json();
     
     if (data.success && data.data && data.data.length > 0) {
-      const result = data.data[0];
-      return {
-        symbol: result.symbol,
-        name: result.name,
-        nameEn: result.nameEn,
-        type: result.type,
-        exchange: result.exchange,
-        id: result.id,
-      };
+      return data.data.map((item: any) => ({
+        symbol: item.symbol,
+        name: item.name,
+        nameEn: item.nameEn,
+        type: mapEntityType(item.type),
+        exchange: item.exchange,
+        id: item.symbol.toLowerCase(),
+        price: item.price,
+        currency: item.currency,
+        _score: item._score,
+      }));
+    }
+    
+    // If search failed with error, return empty but don't log
+    if (data.error) {
+      return [];
     }
   } catch (e) {
     console.error('Company search failed:', e);
   }
   
-  return null;
+  return [];
+}
+
+function mapEntityType(type: string): CompanyType {
+  const mapping: Record<string, CompanyType> = {
+    'us-stock': 'listed',
+    'hk-stock': 'listed',
+    'crypto': 'token',
+    'hk-ipo': 'ipo',
+    'ipo': 'ipo',
+    'preipo': 'preipo',
+    'token': 'token',
+  };
+  return mapping[type] || 'listed';
 }

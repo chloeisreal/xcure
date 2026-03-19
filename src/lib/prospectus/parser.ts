@@ -1,20 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import * as pdfParseLib from 'pdf-parse';
-
-type PdfParseFunction = (buffer: Buffer) => Promise<{
-  text: string;
-  numpages: number;
-}>;
-
-let pdfParse: PdfParseFunction | null = null;
-
-async function loadPdfParse(): Promise<PdfParseFunction> {
-  if (!pdfParse) {
-    pdfParse = pdfParseLib as unknown as PdfParseFunction;
-  }
-  return pdfParse;
-}
 
 export interface ParsedProspectus {
   rawText: string;
@@ -23,24 +8,10 @@ export interface ParsedProspectus {
 }
 
 export async function parseProspectusPDF(pdfPath: string): Promise<ParsedProspectus | null> {
-  if (!fs.existsSync(pdfPath)) {
-    return null;
-  }
-
-  try {
-    const pdf = await loadPdfParse();
-    const dataBuffer = fs.readFileSync(pdfPath);
-    const data = await pdf(dataBuffer);
-
-    return {
-      rawText: data.text,
-      pageCount: data.numpages,
-      extractedAt: new Date().toISOString(),
-    };
-  } catch (error) {
-    console.error('Error parsing PDF:', error);
-    return null;
-  }
+  // PDF parsing is disabled for now due to Node.js compatibility issues
+  // Pipeline data should be manually added to the database
+  console.log('PDF parsing is disabled - using manual database data');
+  return null;
 }
 
 export async function extractFromLocalProspectus(stockCode: string): Promise<ParsedProspectus | null> {

@@ -1,0 +1,106 @@
+import { type Chain } from "wagmi/chains";
+import { http, createConfig } from "wagmi";
+import { injected } from "wagmi/connectors";
+
+/**
+ * Cure L3 Chain Configuration for Wagmi
+ * 
+ * This config enables the frontend to:
+ * 1. Add "Switch to Cure L3 (local)" button
+ * 2. Display balance in CURE token
+ * 3. Show gas fees paid in CURE
+ */
+
+export const cureL3 = {
+  id: 333333,
+  name: "Cure L3 (Local)",
+  nativeCurrency: {
+    name: "Cure",
+    symbol: "CURE",
+    decimals: 18,
+  },
+  rpcUrls: {
+    default: {
+      http: ["http://127.0.0.1:3347"],
+    },
+    public: {
+      http: ["http://127.0.0.1:3347"],
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: "Cure Explorer",
+      url: "http://localhost:4000", // Blockscout if enabled
+    },
+  },
+  testnet: true,
+} as const satisfies Chain;
+
+/**
+ * Optional: L2 (Arbitrum Nitro) for bridging
+ */
+export const arbitrumNitro = {
+  id: 412346,
+  name: "Arbitrum Nitro (Local)",
+  nativeCurrency: {
+    name: "Ether",
+    symbol: "ETH",
+    decimals: 18,
+  },
+  rpcUrls: {
+    default: {
+      http: ["http://127.0.0.1:8547"],
+    },
+    public: {
+      http: ["http://127.0.0.1:8547"],
+    },
+  },
+  testnet: true,
+} as const satisfies Chain;
+
+/**
+ * Wagmi Config - Add to your existing wagmi config
+ * 
+ * Usage in your existing providers.tsx:
+ * 
+ * import { cureL3 } from './wagmi-config/chains';
+ * 
+ * const config = createConfig({
+ *   chains: [mainnet, arbitrum, cureL3],
+ *   connectors: [injected()],
+ *   transports: {
+ *     [mainnet.id]: http(),
+ *     [arbitrum.id]: http(),
+ *     [cureL3.id]: http('http://127.0.0.1:3347'),
+ *   },
+ * })
+ */
+export const wagmiConfig = createConfig({
+  chains: [cureL3],
+  connectors: [injected()],
+  transports: {
+    [cureL3.id]: http("http://127.0.0.1:3347"),
+  },
+});
+
+/**
+ * Helper function to switch to Cure L3
+ * Use with useSwitchChain hook
+ */
+export const switchToCureL3 = {
+  chainId: cureL3.id,
+};
+
+/**
+ * Chain list for dropdown selection
+ */
+export const supportedChains = [cureL3];
+
+/**
+ * Demo account for testing
+ * WARNING: Never use in production!
+ */
+export const demoAccount = {
+  address: "0x3f1Eae7D46d88F08fc2F8ed27FCb2AB183EB2d0E" as `0x${string}`,
+  privateKey: "0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659" as `0x${string}`,
+};
