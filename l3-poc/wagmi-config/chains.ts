@@ -1,4 +1,5 @@
-import { Chain, http, createConfig } from "wagmi";
+import { type Chain } from "wagmi/chains";
+import { http, createConfig } from "wagmi";
 import { injected } from "wagmi/connectors";
 
 /**
