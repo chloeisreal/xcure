@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useReadContract, useReadContracts } from "wagmi";
@@ -8,7 +9,19 @@ import { FACTORY_ADDRESS, FACTORY_ABI, MEME_TOKEN_ABI, GRAD_THRESHOLD } from "@/
 
 const COLORS = ["#7c3aed", "#2563eb", "#059669", "#dc2626", "#d97706", "#db2777", "#0891b2", "#7c2d12"];
 
+type SortOption = "hottest" | "newest" | "graduating" | "graduated";
+
+const SORT_LABELS: Record<SortOption, string> = {
+  hottest:    "🔥 Hottest",
+  newest:     "🆕 Newest",
+  graduating: "🎯 Graduating Soon",
+  graduated:  "🎓 Graduated",
+};
+
 export default function MemePage() {
+  const [search, setSearch] = useState("");
+  const [sort, setSort]     = useState<SortOption>("hottest");
+
   const { data: length } = useReadContract({
     address: FACTORY_ADDRESS,
     abi: FACTORY_ABI,
@@ -28,21 +41,54 @@ export default function MemePage() {
 
   const { data: tokenData } = useReadContracts({
     contracts: tokenAddrs.flatMap((addr) => [
-      { address: addr, abi: MEME_TOKEN_ABI, functionName: "name"      } as const,
-      { address: addr, abi: MEME_TOKEN_ABI, functionName: "symbol"    } as const,
+      { address: addr, abi: MEME_TOKEN_ABI, functionName: "name"       } as const,
+      { address: addr, abi: MEME_TOKEN_ABI, functionName: "symbol"     } as const,
       { address: addr, abi: MEME_TOKEN_ABI, functionName: "cureRaised" } as const,
-      { address: addr, abi: MEME_TOKEN_ABI, functionName: "graduated" } as const,
+      { address: addr, abi: MEME_TOKEN_ABI, functionName: "graduated"  } as const,
     ]),
     query: { enabled: tokenAddrs.length > 0, refetchInterval: 10_000 },
   });
 
   const tokens = tokenAddrs.map((addr, i) => ({
-    address:   addr,
-    name:      (tokenData?.[i * 4    ]?.result ?? "…")    as string,
-    symbol:    (tokenData?.[i * 4 + 1]?.result ?? "…")    as string,
-    cureRaised: (tokenData?.[i * 4 + 2]?.result ?? 0n)    as bigint,
-    graduated: (tokenData?.[i * 4 + 3]?.result ?? false)  as boolean,
+    address:     addr,
+    originalIdx: i,
+    name:        (tokenData?.[i * 4    ]?.result ?? "…")   as string,
+    symbol:      (tokenData?.[i * 4 + 1]?.result ?? "…")   as string,
+    cureRaised:  (tokenData?.[i * 4 + 2]?.result ?? 0n)    as bigint,
+    graduated:   (tokenData?.[i * 4 + 3]?.result ?? false) as boolean,
   }));
+
+  // ── Aggregate stats ───────────────────────────────────────────────────────
+  const graduatedCount  = tokens.filter((t) => t.graduated).length;
+  const totalCureRaised = tokens.reduce((acc, t) => acc + t.cureRaised, 0n);
+
+  // ── Filter + sort (client-side) ───────────────────────────────────────────
+  const displayed = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const filtered = q
+      ? tokens.filter(
+          (t) =>
+            t.name.toLowerCase().includes(q) ||
+            t.symbol.toLowerCase().includes(q),
+        )
+      : tokens;
+
+    return [...filtered].sort((a, b) => {
+      switch (sort) {
+        case "hottest":
+          return a.cureRaised > b.cureRaised ? -1 : a.cureRaised < b.cureRaised ? 1 : 0;
+        case "newest":
+          return b.originalIdx - a.originalIdx;
+        case "graduating":
+          // Non-graduated first (closest to threshold), then graduated
+          if (a.graduated !== b.graduated) return a.graduated ? 1 : -1;
+          return a.cureRaised > b.cureRaised ? -1 : a.cureRaised < b.cureRaised ? 1 : 0;
+        case "graduated":
+          if (a.graduated !== b.graduated) return a.graduated ? -1 : 1;
+          return a.cureRaised > b.cureRaised ? -1 : a.cureRaised < b.cureRaised ? 1 : 0;
+      }
+    });
+  }, [tokens, search, sort]);
 
   return (
     <div className="min-h-screen bg-[#111827] text-white p-6">
@@ -68,10 +114,48 @@ export default function MemePage() {
         </div>
 
         {/* Stats bar */}
-        <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 px-5 py-3 flex gap-6 text-sm mb-6">
-          <span className="text-slate-400">Tokens launched: <span className="text-white font-semibold">{Number(length ?? 0n)}</span></span>
-          <span className="text-slate-400">Factory: <span className="font-mono text-xs text-slate-300">{FACTORY_ADDRESS.slice(0, 10)}…</span></span>
+        <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 px-5 py-3 flex flex-wrap gap-x-6 gap-y-2 text-sm mb-4">
+          <span className="text-slate-400">
+            Tokens launched:{" "}
+            <span className="text-white font-semibold">{Number(length ?? 0n)}</span>
+          </span>
+          <span className="text-slate-400">
+            Graduated:{" "}
+            <span className="text-green-400 font-semibold">{graduatedCount}</span>
+          </span>
+          <span className="text-slate-400">
+            Total CURE raised:{" "}
+            <span className="text-purple-300 font-semibold">
+              {parseFloat(formatUnits(totalCureRaised, 18)).toLocaleString(undefined, { maximumFractionDigits: 2 })} CURE
+            </span>
+          </span>
+          <span className="text-slate-400">
+            Factory:{" "}
+            <span className="font-mono text-xs text-slate-300">{FACTORY_ADDRESS.slice(0, 10)}…</span>
+          </span>
         </div>
+
+        {/* Search + Sort */}
+        {tokens.length > 0 && (
+          <div className="flex gap-2 mb-6">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name or symbol…"
+              className="flex-1 rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/40"
+            />
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as SortOption)}
+              className="rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-2.5 text-sm text-slate-300 focus:outline-none focus:border-purple-500 cursor-pointer"
+            >
+              {(Object.entries(SORT_LABELS) as [SortOption, string][]).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Grid */}
         {tokens.length === 0 ? (
@@ -86,14 +170,16 @@ export default function MemePage() {
               Launch a Token
             </Link>
           </div>
+        ) : displayed.length === 0 ? (
+          <div className="text-center py-16 text-slate-500">
+            <p className="text-3xl mb-3">🔍</p>
+            <p className="font-semibold">No tokens match &ldquo;{search}&rdquo;</p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {tokens.map((token, i) => {
-              const pct = Math.min(
-                Number((token.cureRaised * 10_000n) / GRAD_THRESHOLD) / 100,
-                100,
-              );
-              const color = COLORS[i % COLORS.length];
+            {displayed.map((token) => {
+              const pct   = Math.min(Number((token.cureRaised * 10_000n) / GRAD_THRESHOLD) / 100, 100);
+              const color = COLORS[token.originalIdx % COLORS.length];
               return (
                 <Link
                   key={token.address}
@@ -130,10 +216,7 @@ export default function MemePage() {
                     <div className="h-2 rounded-full bg-slate-700">
                       <div
                         className="h-2 rounded-full transition-all"
-                        style={{
-                          width: `${pct}%`,
-                          background: token.graduated ? "#22c55e" : color,
-                        }}
+                        style={{ width: `${pct}%`, background: token.graduated ? "#22c55e" : color }}
                       />
                     </div>
                   </div>
