@@ -7,6 +7,7 @@ import AnalysisReport from "@/components/AnalysisReport";
 import ValuationReport from "@/components/ValuationReport";
 import NotFoundState from "@/components/NotFoundState";
 import SearchFeedback from "@/components/SearchFeedback";
+import StatsBar from "@/components/StatsBar";
 import {
   useValuation,
   detectCompanyType,
@@ -67,12 +68,6 @@ const FEATURE_CARDS = [
   },
 ];
 
-const STATS = [
-  { label: "Network",       value: "Arbitrum Sepolia" },
-  { label: "AI Model",      value: "Gemini" },
-  { label: "Token Supply",  value: "1,000,000,000 $CURE" },
-  { label: "VC Allocation", value: "0%" },
-];
 
 export default function Home() {
   const aiToolRef = useRef<HTMLElement>(null);
@@ -276,14 +271,7 @@ export default function Home() {
 
         {/* ── Stats Bar ────────────────────────────────────────────────────── */}
         <section className="max-w-4xl mx-auto w-full px-4 pb-12">
-          <div className="rounded-2xl border border-slate-700/50 bg-slate-800/30 backdrop-blur-sm px-6 py-4 grid grid-cols-2 sm:grid-cols-4 gap-y-4 gap-x-2 text-center">
-            {STATS.map((s) => (
-              <div key={s.label} className="flex flex-col gap-0.5">
-                <span className="text-white font-bold text-sm sm:text-base">{s.value}</span>
-                <span className="text-slate-500 text-xs">{s.label}</span>
-              </div>
-            ))}
-          </div>
+          <StatsBar />
         </section>
 
         {/* ── Feature Cards ────────────────────────────────────────────────── */}

@@ -86,37 +86,52 @@ export async function POST(req: NextRequest) {
   const geminiKey = process.env.GEMINI_API_KEY;
 
   if (geminiKey) {
-    const { GoogleGenerativeAI } = await import("@google/generative-ai");
-    const genAI = new GoogleGenerativeAI(geminiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    try {
+      const { GoogleGenerativeAI } = await import("@google/generative-ai");
+      const genAI = new GoogleGenerativeAI(geminiKey);
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-    const result = await model.generateContentStream(PROMPT(query));
+      console.log("[analyze] Calling Gemini API for:", query);
+      const result = await model.generateContentStream(PROMPT(query));
 
-    const stream = new ReadableStream({
-      async start(controller) {
-        const encoder = new TextEncoder();
-        for await (const chunk of result.stream) {
-          const text = chunk.text();
-          if (text) {
-            fullText += text;
-            controller.enqueue(encoder.encode(text));
+      const stream = new ReadableStream({
+        async start(controller) {
+          const encoder = new TextEncoder();
+          try {
+            for await (const chunk of result.stream) {
+              const text = chunk.text();
+              if (text) {
+                fullText += text;
+                controller.enqueue(encoder.encode(text));
+              }
+            }
+            if (fullText) {
+              cacheSet(cacheKeyName, fullText, CACHE_TTL).catch(console.error);
+            }
+            controller.close();
+          } catch (streamErr) {
+            console.error("[analyze] Gemini stream error:", streamErr);
+            controller.error(streamErr);
           }
-        }
-        controller.close();
-      },
-    });
+        },
+      });
 
-    // Save to cache after streaming completes
-    if (fullText) {
-      cacheSet(cacheKeyName, fullText, CACHE_TTL).catch(console.error);
+      return new Response(stream, {
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "X-Cache": "MISS"
+        },
+      });
+    } catch (geminiErr: any) {
+      console.error("[analyze] Gemini API error:", {
+        message: geminiErr?.message,
+        status: geminiErr?.status,
+        statusText: geminiErr?.statusText,
+        errorDetails: geminiErr?.errorDetails,
+        stack: geminiErr?.stack,
+      });
+      // Fall through to mock on Gemini error
     }
-
-    return new Response(stream, {
-      headers: { 
-        "Content-Type": "text/plain; charset=utf-8",
-        "X-Cache": "MISS"
-      },
-    });
   }
 
   // Mock fallback
