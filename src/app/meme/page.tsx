@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useReadContract, useReadContracts } from "wagmi";
@@ -19,8 +19,23 @@ const SORT_LABELS: Record<SortOption, string> = {
 };
 
 export default function MemePage() {
-  const [search, setSearch] = useState("");
-  const [sort, setSort]     = useState<SortOption>("hottest");
+  const [search, setSearch]       = useState("");
+  const [sort, setSort]           = useState<SortOption>("hottest");
+  const [imageMap, setImageMap]   = useState<Record<string, string>>({});
+
+  // Read imageURIs from localStorage after mount (client-only)
+  useEffect(() => {
+    const map: Record<string, string> = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key?.startsWith("meme:0x")) continue;
+      try {
+        const meta = JSON.parse(localStorage.getItem(key) ?? "{}");
+        if (meta.imageURI) map[key.slice(5)] = meta.imageURI; // strip "meme:" prefix
+      } catch {}
+    }
+    setImageMap(map);
+  }, []);
 
   const { data: length } = useReadContract({
     address: FACTORY_ADDRESS,
@@ -188,12 +203,20 @@ export default function MemePage() {
                 >
                   {/* Token identity */}
                   <div className="flex items-center gap-3">
-                    <span
-                      className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0"
-                      style={{ background: color }}
-                    >
-                      {token.symbol[0]}
-                    </span>
+                    {imageMap[token.address] ? (
+                      <img
+                        src={imageMap[token.address]}
+                        alt={token.symbol}
+                        className="w-11 h-11 rounded-full object-cover shrink-0"
+                      />
+                    ) : (
+                      <span
+                        className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0"
+                        style={{ background: color }}
+                      >
+                        {token.symbol[0]}
+                      </span>
+                    )}
                     <div className="min-w-0 flex-1">
                       <div className="font-semibold truncate group-hover:text-purple-300 transition-colors">
                         {token.name}
