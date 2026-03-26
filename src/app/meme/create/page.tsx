@@ -1,12 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount, usePublicClient, useWriteContract } from "wagmi";
 import { parseEventLogs } from "viem";
 import { FACTORY_ADDRESS, FACTORY_ABI } from "@/lib/meme-abis";
+
+const CLOUDINARY_URL    = "https://api.cloudinary.com/v1_1/dzrmc3fe4/image/upload";
+const CLOUDINARY_PRESET = "xcuretest";
+const MAX_FILE_BYTES    = 5 * 1024 * 1024; // 5 MB
+const ALLOWED_TYPES     = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
 export default function CreatePage() {
   const router = useRouter();
@@ -20,6 +25,53 @@ export default function CreatePage() {
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<"idle" | "pending" | "error">("idle");
   const [error,  setError]  = useState<string | null>(null);
+
+  // Image upload state
+  const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "done" | "error">("idle");
+  const [uploadError,  setUploadError]  = useState<string | null>(null);
+  const [dragOver,     setDragOver]     = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function uploadToCloudinary(file: File) {
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setUploadError("Only JPG, PNG, GIF, WEBP allowed");
+      setUploadStatus("error");
+      return;
+    }
+    if (file.size > MAX_FILE_BYTES) {
+      setUploadError("File must be under 5 MB");
+      setUploadStatus("error");
+      return;
+    }
+    setUploadStatus("uploading");
+    setUploadError(null);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("upload_preset", CLOUDINARY_PRESET);
+      const res = await fetch(CLOUDINARY_URL, { method: "POST", body: form });
+      if (!res.ok) throw new Error(`Cloudinary error ${res.status}`);
+      const data = await res.json();
+      setImageURI(data.secure_url);
+      setUploadStatus("done");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Upload failed";
+      setUploadError(msg);
+      setUploadStatus("error");
+    }
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) uploadToCloudinary(file);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) uploadToCloudinary(file);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -130,22 +182,68 @@ export default function CreatePage() {
               <div className="flex-1 h-px bg-slate-700/60" />
             </div>
 
-            {/* Image URI */}
+            {/* Image Upload */}
             <div>
-              <label className="block text-xs text-slate-400 mb-1.5 font-medium">Image URL</label>
+              <label className="block text-xs text-slate-400 mb-1.5 font-medium">Image</label>
+
+              {uploadStatus === "done" && imageURI ? (
+                // Preview after successful upload
+                <div className="flex items-center gap-3">
+                  <img
+                    src={imageURI}
+                    alt="preview"
+                    className="w-20 h-20 rounded-xl object-cover border border-slate-700 flex-shrink-0"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { setImageURI(""); setUploadStatus("idle"); setUploadError(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                    className="text-xs text-slate-400 hover:text-red-400 transition-colors"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                // Drop zone
+                <div
+                  onClick={() => !busy && fileInputRef.current?.click()}
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={handleDrop}
+                  className={[
+                    "relative flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed py-8 px-4 cursor-pointer transition-colors select-none",
+                    dragOver
+                      ? "border-purple-500 bg-purple-500/10"
+                      : "border-slate-700 bg-slate-900 hover:border-purple-500/60 hover:bg-slate-900/80",
+                    busy ? "opacity-50 pointer-events-none" : "",
+                  ].join(" ")}
+                >
+                  {uploadStatus === "uploading" ? (
+                    <>
+                      <Spinner />
+                      <span className="text-xs text-slate-400">Uploading…</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-8 h-8 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4-4m0 0l4 4m-4-4v9M20 16l-4-4m0 0l-4 4m4-4V9M12 3v6" />
+                      </svg>
+                      <span className="text-xs text-slate-400">Click or drag to upload</span>
+                      <span className="text-[11px] text-slate-600">JPG · PNG · GIF · WEBP · max 5 MB</span>
+                    </>
+                  )}
+                </div>
+              )}
+
               <input
-                value={imageURI}
-                onChange={(e) => setImageURI(e.target.value)}
-                disabled={busy}
-                placeholder="https://…"
-                className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm placeholder-slate-600 focus:outline-none focus:border-purple-500 disabled:opacity-50"
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                className="hidden"
+                onChange={handleFileChange}
               />
-              {imageURI && (
-                <img
-                  src={imageURI}
-                  alt="preview"
-                  className="mt-2 w-16 h-16 rounded-xl object-cover border border-slate-700"
-                />
+
+              {uploadStatus === "error" && uploadError && (
+                <p className="mt-1.5 text-xs text-red-400">{uploadError}</p>
               )}
             </div>
 
