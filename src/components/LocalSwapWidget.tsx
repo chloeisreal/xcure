@@ -40,7 +40,7 @@ function TokenAvatar({ symbol, color, size = 28 }: { symbol: string; color: stri
   );
 }
 
-type PairKey = "CURE_BAO" | "BAO_WETH";
+type PairKey = "CURE_BAO" | "BAO_WETH" | "WETH_CURE";
 
 export default function LocalSwapWidget() {
   const { address, isConnected, chainId: walletChainId } = useAccount();
@@ -54,7 +54,8 @@ export default function LocalSwapWidget() {
   const dep = deployment as Record<string, unknown>;
   const WETH_ADDRESS = ((dep.MockWETH as string | undefined) ?? "0x0000000000000000000000000000000000000000") as `0x${string}`;
   const SWAP_CURE_BAO_ADDRESS  = (deployment.SimpleSwap ?? "0x0000000000000000000000000000000000000000") as `0x${string}`;
-  const SWAP_BAO_WETH_ADDRESS  = ((dep.SimpleSwapBAOWETH as string | undefined) ?? "0x0000000000000000000000000000000000000000") as `0x${string}`;
+  const SWAP_BAO_WETH_ADDRESS  = ((dep.SimpleSwapBAOWETH  as string | undefined) ?? "0x0000000000000000000000000000000000000000") as `0x${string}`;
+  const SWAP_WETH_CURE_ADDRESS = ((dep.SimpleSwapWETHCURE as string | undefined) ?? "0x0000000000000000000000000000000000000000") as `0x${string}`;
   const ZERO = "0x0000000000000000000000000000000000000000";
 
   const TOKENS = [
@@ -65,8 +66,9 @@ export default function LocalSwapWidget() {
   type Token = (typeof TOKENS)[number];
 
   const PAIRS: Record<PairKey, { label: string; tokenAIdx: number; tokenBIdx: number; swapAddress: `0x${string}` }> = {
-    CURE_BAO: { label: "CURE / BAO", tokenAIdx: 0, tokenBIdx: 1, swapAddress: SWAP_CURE_BAO_ADDRESS },
-    BAO_WETH: { label: "BAO / WETH", tokenAIdx: 1, tokenBIdx: 2, swapAddress: SWAP_BAO_WETH_ADDRESS },
+    CURE_BAO:  { label: "CURE / BAO",  tokenAIdx: 0, tokenBIdx: 1, swapAddress: SWAP_CURE_BAO_ADDRESS  },
+    BAO_WETH:  { label: "BAO / WETH",  tokenAIdx: 1, tokenBIdx: 2, swapAddress: SWAP_BAO_WETH_ADDRESS  },
+    WETH_CURE: { label: "WETH / CURE", tokenAIdx: 2, tokenBIdx: 0, swapAddress: SWAP_WETH_CURE_ADDRESS },
   };
 
   const publicClient = usePublicClient();
@@ -90,8 +92,9 @@ export default function LocalSwapWidget() {
   const fromToken = fromIsA ? tokenA : tokenB;
   const toToken   = fromIsA ? tokenB : tokenA;
 
-  const deployed = CURE_ADDRESS !== ZERO && SWAP_CURE_BAO_ADDRESS !== ZERO;
-  const baoWethDeployed = WETH_ADDRESS !== ZERO && SWAP_BAO_WETH_ADDRESS !== ZERO;
+  const deployed       = CURE_ADDRESS !== ZERO && SWAP_CURE_BAO_ADDRESS  !== ZERO;
+  const baoWethDeployed  = WETH_ADDRESS !== ZERO && SWAP_BAO_WETH_ADDRESS  !== ZERO;
+  const wethCureDeployed = WETH_ADDRESS !== ZERO && SWAP_WETH_CURE_ADDRESS !== ZERO;
 
   const parsedAmount = parseFloat(inputAmount);
   const validAmount  = !isNaN(parsedAmount) && parsedAmount > 0;
@@ -250,7 +253,8 @@ export default function LocalSwapWidget() {
 
   function getButton() {
     if (!deployed)    return { label: "Contracts not deployed", disabled: true };
-    if (pairKey === "BAO_WETH" && !baoWethDeployed) return { label: "BAO-WETH pool not deployed", disabled: true };
+    if (pairKey === "BAO_WETH"  && !baoWethDeployed)  return { label: "BAO-WETH pool not deployed",  disabled: true };
+    if (pairKey === "WETH_CURE" && !wethCureDeployed) return { label: "WETH-CURE pool not deployed", disabled: true };
     if (!isConnected) return { label: "Connect Wallet", disabled: true };
     if (!validAmount) return { label: "Enter Amount", disabled: true };
     if (reserveA === 0n && reserveB === 0n) return { label: "Pool has no liquidity", disabled: true };
