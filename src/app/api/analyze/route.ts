@@ -1,47 +1,58 @@
 import { NextRequest } from "next/server";
 import { cacheGet, cacheSet, cacheKey } from "@/lib/data/cache";
 
-const CACHE_TTL = 86400; // 24 hours
+const CACHE_TTL = 7200; // 2 hours
 
-const PROMPT = (query: string) => `You are XCure, an expert biotech AI investment analyst.
-Analyze the following project/token: "${query}"
+const PROMPT = (query: string) => `You are XCure, an expert biotech and DeSci AI investment analyst.
+Analyze the following project, company, or token: "${query}"
+
+IMPORTANT RULES:
+- If this is a DeSci protocol, DAO, or crypto token (e.g. BIO Protocol, VitaDAO, LabDAO, ResearchHub), do NOT fabricate clinical trial data. Instead, analyze protocol mechanics, on-chain governance, treasury, and scientific coordination credibility.
+- If this is a publicly traded pharma/biotech company (e.g. Moderna, BioNTech, Pfizer), analyze based on publicly known real-world data — pipeline stage, approved products, financial health, and R&D focus.
+- If this is an early-stage or private company, be explicit that data is limited and avoid inventing specific numbers.
+- Do NOT make up specific numbers (trial enrollment counts, exact publication counts, precise wallet percentages, etc.). Use qualitative or approximate language instead.
+- Be honest when information is limited or uncertain.
 
 Return a structured report with exactly these 4 sections, using this exact format:
 
 ## Scientific Credibility | Score: X/10
 
-[2-3 paragraphs analyzing the scientific basis, publications, patents, and credibility of claims]
+[2-3 paragraphs. For DeSci protocols: analyze scientific coordination model, quality of affiliated researchers, and legitimacy of the research thesis. For pharma companies: analyze pipeline credibility, published science, and regulatory track record.]
 
 ## Team Background | Tag: [Experienced/Mixed/Early-Stage]
 
-[2-3 paragraphs on founders, advisors, prior exits, academic credentials]
+[2-3 paragraphs on founders, advisors, prior exits, and institutional backing. For DeSci DAOs: include governance structure and community quality.]
 
-## Clinical Data Progress | Phase: [Preclinical/Phase I/Phase II/Phase III/Approved]
+## Clinical Data Progress | Phase: [Preclinical/Phase I/Phase II/Phase III/Approved/Protocol-Stage]
 
-[2-3 paragraphs on trial status, endpoints, enrollment, regulatory designations]
+[2-3 paragraphs. For DeSci/crypto protocols: use "Protocol-Stage" and describe funded research projects, outcomes, or IP NFT activity instead of traditional clinical stages. For pharma: describe actual pipeline status.]
 
 ## Tokenomics & Investment Risk | Risk: [Low/Medium/High]
 
-[2-3 paragraphs on token supply, vesting, utility, treasury, valuation, and key risks]
+[2-3 paragraphs. For DeSci tokens: analyze token utility, treasury health, vesting, governance power, and market liquidity. For traditional companies: analyze valuation multiples, cash runway, and key binary risks.]
 
-Be specific, data-driven, and balanced. Use realistic biotech industry language.`;
+Be balanced, intellectually honest, and avoid generic filler. If you genuinely don't have reliable data on something, say so explicitly.`;
 
 const MOCK_ANALYSIS = (query: string) => `
-## Scientific Credibility | Score: 7/10
+⚠️ **Sample Analysis** — This is a placeholder. Connect your Gemini API key for real-time AI analysis.
 
-${query} demonstrates a moderately strong scientific foundation. The underlying mRNA delivery mechanism is well-established in peer-reviewed literature, with over 120 published studies supporting the core technology. Key patents filed in 2021-2023 cover novel lipid nanoparticle formulations that show improved cellular uptake in preclinical models. However, some efficacy claims around long-term immune memory have yet to be validated in larger cohort studies. Independent replication of Phase I results by two academic institutions strengthens credibility, though the methodology for measuring biomarker endpoints remains contested within the field.
+## Scientific Credibility | Score: —/10
 
-## Team Background | Tag: Experienced
+${query} is a project in the biotech or DeSci space. Without live AI analysis, a meaningful scientific credibility score cannot be assigned. Generally, credibility assessment would examine the strength of the underlying scientific thesis, the quality and independence of affiliated researchers, peer-reviewed publications supporting the core approach, and whether efficacy claims have been independently validated.
 
-The founding team brings deep domain expertise from leading institutions. The CEO previously led oncology R&D at a major pharmaceutical company for 8 years and holds 14 patents in targeted drug delivery. The CSO completed post-doctoral research at MIT's Koch Institute and co-authored 30+ publications in Nature Medicine and Cell. The CMO has shepherded three drugs through FDA approval. Advisory board includes two former FDA officials and a Nobel laureate in Chemistry (2019). The company retains a core of 18 full-time researchers, supplemented by CRO partnerships for clinical operations. Notably, two co-founders departed in 2022, though the company attributes this to strategic pivots rather than internal conflict.
+For DeSci protocols, this section would cover the protocol's mechanism for funding and coordinating research, the track record of IP NFTs or research outputs, and how the community vets scientific claims. For pharma companies, it would cover pipeline depth, published trial data, and regulatory designations.
 
-## Clinical Data Progress | Phase: Phase II
+## Team Background | Tag: —
 
-${query} is currently in Phase II trials across three sites in the US and EU. Phase I data (N=42) published in January 2024 showed acceptable safety profile with no dose-limiting toxicities at the therapeutic dose range and promising pharmacokinetics. The ongoing Phase II trial (N=180) targets a primary endpoint of objective response rate at 24 weeks with interim data expected Q3 2025. Enrollment is 73% complete. Companion diagnostic development is running in parallel under a co-development agreement with a diagnostics partner. The regulatory path appears clear—the FDA granted Breakthrough Therapy designation in December 2023, which should accelerate review timelines. IND approval obtained without clinical holds.
+Detailed team information for ${query} requires live data. A thorough assessment would examine founders' prior institutional affiliations, domain expertise, previous exits or publications, and the caliber of advisors and institutional backers. For DAO-based projects, governance participation rates and contributor quality are also relevant signals.
 
-## Tokenomics & Investment Risk | Risk: Medium
+## Clinical Data Progress | Phase: —
 
-The project's token (${query.toUpperCase()}) launched in 2023 with a total supply of 500 million tokens. Current circulating supply is approximately 180 million (36%), with the remainder locked in a 4-year vesting schedule for team (15%), treasury (25%), and ecosystem incentives (24%). Token utility is tied to governance voting, staking for data access, and fee payments on the platform. Valuation at current FDV implies a 3.2x premium to comparable biotech tokens. Treasury holds 18 months of operational runway in stablecoins, reducing near-term dilution risk. Key risks include regulatory uncertainty around tokenized biotech assets (SEC guidance pending), concentration risk with top 10 wallets holding 41% of supply, and the binary nature of clinical trial outcomes. Liquidity is adequate on major DEXs but thin on CEXs. Overall risk profile is moderate, suitable for investors with high-risk biotech tolerance.
+Progress stage assessment is not available in sample mode. For traditional biotech companies, this section covers active clinical trials, enrollment status, primary endpoints, and regulatory designations such as Breakthrough Therapy or Fast Track. For DeSci protocols, it describes funded research milestones, IP NFT deal activity, and the maturity of research coordination mechanisms.
+
+## Tokenomics & Investment Risk | Risk: —
+
+Token or investment risk analysis for ${query} is unavailable without live data. Key factors to evaluate include token supply structure and vesting schedules, treasury composition and operational runway, token utility beyond speculation, governance concentration, and liquidity depth across venues. For listed companies, valuation multiples relative to pipeline maturity and cash runway are the primary risk indicators.
 `.trim();
 
 function createMockStream(text: string): ReadableStream {
@@ -68,32 +79,55 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  const nocache = req.nextUrl.searchParams.get("nocache") === "1";
   const normalizedQuery = query.toLowerCase().trim();
   const cacheKeyName = cacheKey("analyze", normalizedQuery);
 
-  // Check cache first
-  const cached = await cacheGet<string>(cacheKeyName);
-  if (cached) {
-    return new Response(createMockStream(cached), {
-      headers: { 
-        "Content-Type": "text/plain; charset=utf-8",
-        "X-Cache": "HIT"
-      },
-    });
+  // Check cache first (skipped when ?nocache=1)
+  if (!nocache) {
+    const cached = await cacheGet<string>(cacheKeyName);
+    if (cached) {
+      return new Response(createMockStream(cached), {
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "X-Cache": "HIT",
+        },
+      });
+    }
   }
 
   let fullText = "";
   const geminiKey = process.env.GEMINI_API_KEY;
 
   if (geminiKey) {
-    try {
-      const { GoogleGenerativeAI } = await import("@google/generative-ai");
-      const genAI = new GoogleGenerativeAI(geminiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const { GoogleGenerativeAI } = await import("@google/generative-ai");
+    const genAI = new GoogleGenerativeAI(geminiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-      console.log("[analyze] Calling Gemini API for:", query);
-      const result = await model.generateContentStream(PROMPT(query));
+    // Try up to 2 attempts: first call, then one retry after 2 s on 429
+    async function tryGemini(attempt: number): Promise<ReturnType<typeof model.generateContentStream> | null> {
+      try {
+        console.log(`[analyze] Calling Gemini API for: "${query}" (attempt ${attempt})`);
+        return await model.generateContentStream(PROMPT(query));
+      } catch (err: any) {
+        const is429 = err?.status === 429 || String(err?.message).includes("429");
+        if (is429 && attempt === 1) {
+          console.warn("[analyze] Gemini 429 — waiting 2 s before retry…");
+          await new Promise((r) => setTimeout(r, 2000));
+          return tryGemini(2);
+        }
+        // 429 on retry, or any other error → fall through to mock
+        console.error(`[analyze] Gemini API error (attempt ${attempt}):`, {
+          message: err?.message,
+          status:  err?.status,
+        });
+        return null;
+      }
+    }
 
+    const result = await tryGemini(1);
+
+    if (result) {
       const stream = new ReadableStream({
         async start(controller) {
           const encoder = new TextEncoder();
@@ -119,19 +153,11 @@ export async function POST(req: NextRequest) {
       return new Response(stream, {
         headers: {
           "Content-Type": "text/plain; charset=utf-8",
-          "X-Cache": "MISS"
+          "X-Cache": "MISS",
         },
       });
-    } catch (geminiErr: any) {
-      console.error("[analyze] Gemini API error:", {
-        message: geminiErr?.message,
-        status: geminiErr?.status,
-        statusText: geminiErr?.statusText,
-        errorDetails: geminiErr?.errorDetails,
-        stack: geminiErr?.stack,
-      });
-      // Fall through to mock on Gemini error
     }
+    // result is null → fall through to mock
   }
 
   // Mock fallback
