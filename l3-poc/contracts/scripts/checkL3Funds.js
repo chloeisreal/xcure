@@ -13,14 +13,15 @@ async function main() {
   const provider = new ethers.JsonRpcProvider(L3_RPC);
   const wallet = new ethers.Wallet(DEPLOYER_PRIVATE_KEY, provider);
 
-  console.log("=== Funding L3 ===");
+  console.log("=== Checking L3 Accounts ===");
   console.log("Deployer:", wallet.address);
 
   const balance = await provider.getBalance(wallet.address);
   console.log("Balance:", ethers.formatEther(balance), "ETH");
 
-  if (balance < ethers.parseEther("0.01")) {
-    console.log("\n⚠️ Need to bridge ETH from L2");
+  if (balance < ethers.parseEther("0.001")) {
+    console.log("\n⚠️ No ETH available on L3");
+    console.log("Need to bridge ETH from L2");
   }
 }
 

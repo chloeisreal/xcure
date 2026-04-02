@@ -30,15 +30,15 @@ const config = {
     },
 
     xCureL3: {
-      url: "http://127.0.0.1:8449",
-      chainId: 8937309580,
+      url: process.env.L3_RPC || "http://127.0.0.1:8449",
+      chainId: parseInt(process.env.L3_CHAIN_ID) || 8937309580,
       accounts: process.env.DEPLOYER_PRIVATE_KEY
         ? [process.env.DEPLOYER_PRIVATE_KEY]
-        : ["0xe9d61d1a9f2d792a869072645f0cbf2f298a2e97bf37cdce8f1e00f29fcfa00e"],
+        : [],
     },
 
     arbitrumSepolia: {
-      url: process.env.ARBITRUM_SEPOLIA_RPC || "https://arb-sepolia.g.alchemy.com/v2/demo",
+      url: process.env.ARBITRUM_SEPOLIA_RPC,
       chainId: 421614,
       accounts: process.env.DEPLOYER_PRIVATE_KEY
         ? [process.env.DEPLOYER_PRIVATE_KEY]

@@ -101,6 +101,6 @@ export const supportedChains = [cureL3];
  * WARNING: Never use in production!
  */
 export const demoAccount = {
-  address: "0x3f1Eae7D46d88F08fc2F8ed27FCb2AB183EB2d0E" as `0x${string}`,
-  privateKey: "0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659" as `0x${string}`,
+  address: process.env.DEMO_ACCOUNT_ADDRESS as `0x${string}` || "0x0000000000000000000000000000000000000000",
+  privateKey: process.env.DEMO_PRIVATE_KEY as `0x${string}` || "" as `0x${string}`,
 };
