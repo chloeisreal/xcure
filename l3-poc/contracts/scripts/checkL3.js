@@ -2,9 +2,9 @@ require("dotenv").config();
 const hre = require("hardhat");
 const { ethers } = require("ethers");
 
-const L3_RPC = "http://127.0.0.1:3347";
-const L3_CHAIN_ID = 333333;
-const DEPLOYER_KEY = "0xe9d61d1a9f2d792a869072645f0cbf2f298a2e97bf37cdce8f1e00f29fcfa00e";
+const L3_RPC = process.env.L3_RPC || "http://127.0.0.1:3347";
+const L3_CHAIN_ID = parseInt(process.env.L3_CHAIN_ID) || 333333;
+const DEPLOYER_KEY = process.env.DEPLOYER_PRIVATE_KEY;
 
 async function main() {
   const provider = new ethers.JsonRpcProvider(L3_RPC);

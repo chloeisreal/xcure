@@ -1,10 +1,14 @@
 #!/bin/bash
 # Deploy L3 Rollup to Arbitrum Sepolia using Cast
 
-# Configuration
-RPC_URL="https://arb-sepolia.g.alchemy.com/v2/zx7BMikiG5OzteHcbrIPW"
-PRIVATE_KEY="e9d61d1a9f2d792a869072645f0cbf2f298a2e97bf37cdce8f1e00f29fcfa00e"
-CHAIN_ID="281003"
+# Load from .env (create .env file with these variables)
+if [ -f .env ]; then
+  source .env
+fi
+
+RPC_URL="${ARBITRUM_SEPOLIA_RPC:-https://arb-sepolia.g.alchemy.com/v2/demo}"
+PRIVATE_KEY="${DEPLOYER_PRIVATE_KEY}"
+CHAIN_ID="${L3_CHAIN_ID:-281003}"
 
 # RollupCreator address on Arbitrum Sepolia
 ROLLUP_CREATOR="0x0F7f71c48c6278422736a4a9441cd1d59ba0C2dB"

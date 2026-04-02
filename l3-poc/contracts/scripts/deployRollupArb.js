@@ -1,8 +1,9 @@
 require("dotenv").config();
 const { ethers } = require("ethers");
 
-const RPC = "https://arb-sepolia.g.alchemy.com/v2/zx7BMikiG5OzteHcbrIPW";
-const PRIVATE_KEY = "0xe9d61d1a9f2d792a869072645f0cbf2f298a2e97bf37cdce8f1e00f29fcfa00e";
+require("dotenv").config();
+const RPC = process.env.ARBITRUM_SEPOLIA_RPC;
+const PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY;
 const ROLLUP_CREATOR = "0x0F7f71c48c6278422736a4a9441cd1d59ba0C2dB";
 const CHAIN_ID = 281003;
 
