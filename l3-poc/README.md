@@ -152,8 +152,9 @@ Same as Option A above.
 
 ### Dev Account (Prefunded)
 ```
-Address: 0x3f1Eae7D46d88F08fc2F8ed27FCb2AB183EB2d0E
-Private: 0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659
+# Set these in your .env file:
+# DEPLOYER_PRIVATE_KEY=your_private_key_here
+# Demo Address: 0x3f1Eae7D46d88F08fc2F8ed27FCb2AB183EB2d0E (prefunded on local devnet)
 ```
 
 ### Chain Roles
@@ -217,9 +218,9 @@ curl http://127.0.0.1:3347
 
 ### Send Transactions with Cast
 ```bash
-# Send CURE from dev account
+# Send CURE from dev account (set DEPLOYER_PRIVATE_KEY in .env)
 cast send <recipient> "transfer(address,uint256)" <amount> \
-  --private-key 0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659 \
+  --private-key $DEPLOYER_PRIVATE_KEY \
   --rpc-url http://127.0.0.1:3347
 ```
 
