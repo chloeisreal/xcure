@@ -5,43 +5,66 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-/// @title MemeToken — ERC20 with linear bonding curve, settled in CURE token
+// ── Uniswap V2 minimal interfaces ────────────────────────────────────────────
+interface IUniswapV2Router02 {
+    function addLiquidity(
+        address tokenA,
+        address tokenB,
+        uint256 amountADesired,
+        uint256 amountBDesired,
+        uint256 amountAMin,
+        uint256 amountBMin,
+        address to,
+        uint256 deadline
+    ) external returns (uint256 amountA, uint256 amountB, uint256 liquidity);
+
+    function factory() external pure returns (address);
+}
+
+interface IUniswapV2Factory {
+    function getPair(address tokenA, address tokenB) external view returns (address pair);
+}
+
+/// @title MemeToken — ERC20 with linear bonding curve, settled in CURE token.
 /// @notice Supply: 1B total. 800M sold via bonding curve, 200M to creator.
 ///         Linear price: p(n) = BASE_PRICE + PRICE_SLOPE * n / CURVE_WHOLE  (CURE-wei per whole token)
 ///         Full-curve cost = 1e12 * 8e8 + 5e11 * 4e8 = 8e20 + 2e20 = 1e21 = 1000 CURE → graduation threshold.
 ///         1% fee on every buy and sell, sent to feeRecipient.
+///         On graduation: all raised CURE + remaining curve tokens are deposited into a
+///         Uniswap V2 pool; LP tokens are sent to address(0) (permanently locked).
 contract MemeToken is ERC20 {
     using SafeERC20 for IERC20;
 
-    // ── Supply constants ────────────────────────────────────────────────────
+    // ── Supply constants ─────────────────────────────────────────────────────
     uint256 public constant TOTAL_SUPPLY  = 1_000_000_000 * 1e18;
-    uint256 public constant CURVE_SUPPLY  =   800_000_000 * 1e18; // 80 %
-    uint256 public constant CREATOR_SHARE =   200_000_000 * 1e18; // 20 %
+    uint256 public constant CURVE_SUPPLY  =   800_000_000 * 1e18; // 80%
+    uint256 public constant CREATOR_SHARE =   200_000_000 * 1e18; // 20%
     uint256 public constant CURVE_WHOLE   =   800_000_000;        // whole-token divisor
 
     // ── Curve constants ──────────────────────────────────────────────────────
-    // price(n) = BASE_PRICE + PRICE_SLOPE * n / CURVE_WHOLE  (CURE-wei / whole token)
-    // ∫₀^(8e8) price dn = 1e12·8e8 + 5e11·4e8 = 8e20 + 2e20 = 1e21 = 1000 CURE
-    uint256 public constant BASE_PRICE    = 1e12; // CURE-wei per whole token at n=0
-    uint256 public constant PRICE_SLOPE   = 5e11; // additional CURE-wei per token over full curve
+    uint256 public constant BASE_PRICE  = 1e12; // CURE-wei per whole token at n=0
+    uint256 public constant PRICE_SLOPE = 5e11; // additional CURE-wei per token over full curve
 
     // ── Config ───────────────────────────────────────────────────────────────
     uint256 public constant GRAD_THRESHOLD = 1_000 * 1e18; // 1000 CURE
-    uint256 public constant FEE_BPS        = 100;           // 1 %
+    uint256 public constant FEE_BPS        = 100;           // 1%
 
-    // ── State ────────────────────────────────────────────────────────────────
+    // ── Immutables ───────────────────────────────────────────────────────────
     address public immutable cureToken;
     address public immutable creator;
     address public immutable feeRecipient;
+    address public immutable uniswapV2Router;
 
+    // ── State ─────────────────────────────────────────────────────────────────
     uint256 public tokensSold;  // 1e18 units sold from the curve
     uint256 public cureRaised;  // cumulative CURE raised (excluding fees)
     bool    public graduated;
 
     // ── Events ───────────────────────────────────────────────────────────────
-    event Buy(address indexed buyer,  uint256 tokenAmount, uint256 cureIn);
+    event Buy(address indexed buyer,   uint256 tokenAmount, uint256 cureIn);
     event Sell(address indexed seller, uint256 tokenAmount, uint256 cureOut);
     event Graduated(uint256 totalCureRaised);
+    event GraduatedToUniswap(address indexed pair, uint256 cureAmount, uint256 tokenAmount);
 
     // ── Errors ───────────────────────────────────────────────────────────────
     error AlreadyGraduated();
@@ -55,11 +78,13 @@ contract MemeToken is ERC20 {
         string memory symbol_,
         address creator_,
         address feeRecipient_,
-        address cureToken_
+        address cureToken_,
+        address uniswapV2Router_
     ) ERC20(name_, symbol_) {
-        creator      = creator_;
-        feeRecipient = feeRecipient_;
-        cureToken    = cureToken_;
+        creator          = creator_;
+        feeRecipient     = feeRecipient_;
+        cureToken        = cureToken_;
+        uniswapV2Router  = uniswapV2Router_;
         _mint(creator_,      CREATOR_SHARE);
         _mint(address(this), CURVE_SUPPLY);
     }
@@ -83,10 +108,8 @@ contract MemeToken is ERC20 {
     // ── Transactions ─────────────────────────────────────────────────────────
 
     /// @notice Buy tokens from the bonding curve using CURE.
-    /// @param cureAmount  CURE (in CURE-wei) to spend. Caller must have approved this contract.
-    /// @param minTokens   Minimum meme tokens to receive (slippage guard). Pass 0 to skip.
     function buy(uint256 cureAmount, uint256 minTokens) external {
-        if (graduated)      revert AlreadyGraduated();
+        if (graduated)       revert AlreadyGraduated();
         if (cureAmount == 0) revert ZeroAmount();
 
         IERC20(cureToken).safeTransferFrom(msg.sender, address(this), cureAmount);
@@ -103,7 +126,7 @@ contract MemeToken is ERC20 {
         if (amount < minTokens) revert SlippageExceeded();
 
         uint256 actualCost = getCost(tokensSold, amount);
-        uint256 refund     = cureIn - actualCost; // rounding dust
+        uint256 refund     = cureIn - actualCost;
 
         tokensSold += amount;
         cureRaised += actualCost;
@@ -111,24 +134,21 @@ contract MemeToken is ERC20 {
         _transfer(address(this), msg.sender, amount);
 
         IERC20(cureToken).safeTransfer(feeRecipient, fee);
-        if (refund > 0) {
-            IERC20(cureToken).safeTransfer(msg.sender, refund);
-        }
+        if (refund > 0) IERC20(cureToken).safeTransfer(msg.sender, refund);
 
         emit Buy(msg.sender, amount, actualCost);
 
-        if (!graduated && cureRaised >= GRAD_THRESHOLD) {
+        if (cureRaised >= GRAD_THRESHOLD) {
             graduated = true;
             emit Graduated(cureRaised);
+            _graduateToUniswap();
         }
     }
 
     /// @notice Sell `tokenAmount` meme tokens back to the bonding curve for CURE.
-    /// @param tokenAmount  Meme tokens to sell (1e18 units).
-    /// @param minCure      Minimum CURE to receive (slippage guard). Pass 0 to skip.
     function sell(uint256 tokenAmount, uint256 minCure) external {
-        if (graduated)            revert AlreadyGraduated();
-        if (tokenAmount == 0)     revert ZeroAmount();
+        if (graduated)              revert AlreadyGraduated();
+        if (tokenAmount == 0)       revert ZeroAmount();
         if (tokenAmount > tokensSold) revert InsufficientCurveSupply();
 
         uint256 proceeds = getCost(tokensSold - tokenAmount, tokenAmount);
@@ -149,6 +169,37 @@ contract MemeToken is ERC20 {
     }
 
     // ── Internal ─────────────────────────────────────────────────────────────
+
+    /// @dev Deposit all raised CURE + remaining curve tokens into a Uniswap V2 pool.
+    ///      LP tokens are sent to address(0) — permanently locked.
+    function _graduateToUniswap() internal {
+        uint256 cureAmt  = IERC20(cureToken).balanceOf(address(this));
+        uint256 memeAmt  = balanceOf(address(this)); // remaining unsold curve tokens
+
+        if (cureAmt == 0 || memeAmt == 0) return;
+
+        // Approve router to spend both tokens
+        IERC20(cureToken).forceApprove(uniswapV2Router, cureAmt);
+        _approve(address(this), uniswapV2Router, memeAmt);
+
+        // Add liquidity; LP goes to address(0) — burned forever
+        (uint256 usedCure, uint256 usedMeme,) = IUniswapV2Router02(uniswapV2Router).addLiquidity(
+            cureToken,
+            address(this),
+            cureAmt,
+            memeAmt,
+            (cureAmt * 95) / 100, // 5% slippage tolerance on CURE
+            (memeAmt * 95) / 100, // 5% slippage tolerance on meme token
+            address(0),           // LP recipient = burn address
+            block.timestamp + 300 // 5-minute deadline
+        );
+
+        // Retrieve the pair address for the event
+        address uniFactory = IUniswapV2Router02(uniswapV2Router).factory();
+        address pair = IUniswapV2Factory(uniFactory).getPair(cureToken, address(this));
+
+        emit GraduatedToUniswap(pair, usedCure, usedMeme);
+    }
 
     /// @dev Binary search: largest whole-token count buyable for `cureIn` CURE-wei.
     function _tokensForCure(uint256 cureIn) internal view returns (uint256) {

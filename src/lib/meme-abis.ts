@@ -1,6 +1,6 @@
 // ── Addresses ──────────────────────────────────────────────────────────────
 export const FACTORY_ADDRESS =
-  "0x432208DF6e2219951D4FcA6716B7b6A8b032f4d2" as const;
+  "0xb18e67A80bd311D47639c190f430EFB7eaFE9395" as const;
 
 export const CURE_ADDRESS =
   "0xf4d76f449E66c714105928f24bc9fD59692B1157" as const;

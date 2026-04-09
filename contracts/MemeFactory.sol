@@ -7,6 +7,7 @@ import "./BondingCurve.sol";
 contract MemeFactory {
     address public immutable feeRecipient;
     address public immutable cureToken;
+    address public immutable uniswapV2Router;
 
     address[] public allTokens;
 
@@ -18,9 +19,14 @@ contract MemeFactory {
         uint256 index
     );
 
-    constructor(address feeRecipient_, address cureToken_) {
-        feeRecipient = feeRecipient_;
-        cureToken    = cureToken_;
+    constructor(
+        address feeRecipient_,
+        address cureToken_,
+        address uniswapV2Router_
+    ) {
+        feeRecipient    = feeRecipient_;
+        cureToken       = cureToken_;
+        uniswapV2Router = uniswapV2Router_;
     }
 
     /// @notice Deploy a new MemeToken bonding curve.
@@ -29,7 +35,14 @@ contract MemeFactory {
         string calldata name,
         string calldata symbol
     ) external returns (address token) {
-        MemeToken meme = new MemeToken(name, symbol, msg.sender, feeRecipient, cureToken);
+        MemeToken meme = new MemeToken(
+            name,
+            symbol,
+            msg.sender,
+            feeRecipient,
+            cureToken,
+            uniswapV2Router
+        );
         token = address(meme);
         allTokens.push(token);
         emit TokenCreated(token, msg.sender, name, symbol, allTokens.length - 1);

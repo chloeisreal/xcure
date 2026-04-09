@@ -1,18 +1,24 @@
 const hre = require("hardhat");
 const { ethers } = require("hardhat");
 
-const CURE_ADDRESS = "0xf4d76f449E66c714105928f24bc9fD59692B1157";
+const CURE_ADDRESS          = "0xf4d76f449E66c714105928f24bc9fD59692B1157";
+const UNISWAP_V2_ROUTER     = "0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24"; // Arbitrum Sepolia & One
 
 async function main() {
   const [deployer] = await ethers.getSigners();
   console.log("\n=== Meme Factory Deployment ===");
-  console.log("Network :", hre.network.name);
-  console.log("Deployer:", deployer.address);
-  console.log("CURE    :", CURE_ADDRESS);
+  console.log("Network         :", hre.network.name);
+  console.log("Deployer        :", deployer.address);
+  console.log("CURE            :", CURE_ADDRESS);
+  console.log("Uniswap V2 Router:", UNISWAP_V2_ROUTER);
 
-  // Deploy factory (deployer receives fees; cureToken = MockCURE on Arbitrum Sepolia)
+  // Deploy factory
   const MemeFactory = await ethers.getContractFactory("MemeFactory");
-  const factory = await MemeFactory.deploy(deployer.address, CURE_ADDRESS);
+  const factory = await MemeFactory.deploy(
+    deployer.address,    // feeRecipient
+    CURE_ADDRESS,        // cureToken
+    UNISWAP_V2_ROUTER    // uniswapV2Router
+  );
   await factory.waitForDeployment();
   const factoryAddr = await factory.getAddress();
   console.log("\nMemeFactory:", factoryAddr);
@@ -30,22 +36,24 @@ async function main() {
   const tokenAddr = parsed.args.token;
 
   console.log("\nSample MemeToken:", tokenAddr);
-  console.log("  creator :", parsed.args.creator);
-  console.log("  name    :", parsed.args.name);
-  console.log("  symbol  :", parsed.args.symbol);
+  console.log("  creator       :", parsed.args.creator);
+  console.log("  name          :", parsed.args.name);
+  console.log("  symbol        :", parsed.args.symbol);
 
-  // Quick sanity check on the deployed token
-  const MemeToken = await ethers.getContractFactory("MemeToken");
-  const token = MemeToken.attach(tokenAddr);
-  const totalSup = await token.totalSupply();
-  const curveBal = await token.balanceOf(tokenAddr);
-  const gradThresh = await token.GRAD_THRESHOLD();
-  console.log("\n  totalSupply  :", ethers.formatEther(totalSup), "PEPE");
-  console.log("  curve holds  :", ethers.formatEther(curveBal), "PEPE");
-  console.log("  gradThreshold:", ethers.formatEther(gradThresh), "CURE");
-  console.log("  cureToken    :", await token.cureToken());
+  // Sanity check on the deployed token
+  const MemeToken = await ethers.getContractAt("MemeToken", tokenAddr);
+  const totalSup   = await MemeToken.totalSupply();
+  const curveBal   = await MemeToken.balanceOf(tokenAddr);
+  const gradThresh = await MemeToken.GRAD_THRESHOLD();
+  const router     = await MemeToken.uniswapV2Router();
+  console.log("\n  totalSupply    :", ethers.formatEther(totalSup), "PEPE");
+  console.log("  curve holds    :", ethers.formatEther(curveBal), "PEPE");
+  console.log("  gradThreshold  :", ethers.formatEther(gradThresh), "CURE");
+  console.log("  cureToken      :", await MemeToken.cureToken());
+  console.log("  uniswapV2Router:", router);
+
   console.log("\n=== Done ===\n");
-  console.log("Update FACTORY_ADDRESS in src/lib/meme-abis.ts to:", factoryAddr);
+  console.log("⚠️  Update FACTORY_ADDRESS in src/lib/meme-abis.ts to:", factoryAddr);
 }
 
 main().catch(err => {

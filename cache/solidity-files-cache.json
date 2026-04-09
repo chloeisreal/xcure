@@ -454,8 +454,8 @@
       ]
     },
     "/Users/ziqi/xcure/contracts/BondingCurve.sol": {
-      "lastModificationDate": 1773842889515,
-      "contentHash": "98801f5520e78cb47ab9d5eb26f579c5",
+      "lastModificationDate": 1775567173837,
+      "contentHash": "99f4f53089b899d2a99b3fb823d18927",
       "sourceName": "contracts/BondingCurve.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -490,12 +490,14 @@
         "^0.8.20"
       ],
       "artifacts": [
+        "IUniswapV2Factory",
+        "IUniswapV2Router02",
         "MemeToken"
       ]
     },
     "/Users/ziqi/xcure/contracts/MemeFactory.sol": {
-      "lastModificationDate": 1773842899928,
-      "contentHash": "34d9be591fa508ce4d94e129cc0d66b3",
+      "lastModificationDate": 1775567183407,
+      "contentHash": "844a07e96edd63ba6c47a4a56fc6d4b1",
       "sourceName": "contracts/MemeFactory.sol",
       "solcConfig": {
         "version": "0.8.20",
