@@ -1,0 +1,24 @@
+{
+  "chainInfo": {
+    "chainName": "xCure Network",
+    "chainId": 412346,
+    "parentChainId": 421614,
+    "rpcUrl": "http://127.0.0.1:8449",
+    "explorerUrl": "http://localhost:4000",
+    "nativeToken": "0x0000000000000000000000000000000000000000"
+  },
+  "tokenBridgeContracts": {
+    "l2Contracts": {
+      "tokenBridge": "0xF71C64F37A8AdA918b1fD7C7d9e3FC5aC6C813Ce",
+      "token": "0xf4d76f449E66c714105928f24bc9fD59692B1157"
+    },
+    "l3Contracts": {
+      "tokenBridge": "0x3B298e17897548aEB02F52e6761ec578D195A21b",
+      "token": "0x2c45C5b9C2bcBD8Ed93FF2f6b1B562C5619FC937"
+    }
+  },
+  "ethBridge": {
+    "l2": "0x3284652146F2dFA44F0AaB1A4Dd1e8EaeA131665",
+    "l3": "0x658bc11dDB065D2444Ed42422144548f56784482"
+  }
+}

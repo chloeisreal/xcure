@@ -1,0 +1,46 @@
+{
+  "config": {
+    "chainId": 39186971080,
+    "homesteadBlock": 0,
+    "eip150Block": 0,
+    "eip150Hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "eip155Block": 0,
+    "eip158Block": 0,
+    "byzantiumBlock": 0,
+    "constantinopleBlock": 0,
+    "petersburgBlock": 0,
+    "istanbulBlock": 0,
+    "muirGlacierBlock": 0,
+    "berlinBlock": 0,
+    "londonBlock": 0,
+    "arbitrum": {
+      "EnableArbOS": true,
+      "AllowDebugPrecompiles": false,
+      "DataAvailabilityCommittee": true,
+      "InitialArbOSVersion": 32,
+      "GenesisBlockNum": 0,
+      "MaxCodeSize": 24576,
+      "MaxInitCodeSize": 49152,
+      "InitialChainOwner": "0x44d710446F919e2c5d0E23b0d48EF5D6feC2289e"
+    }
+  },
+  "alloc": {
+    "0x44d710446F919e2c5d0E23b0d48EF5D6feC2289e": {
+      "balance": "0x64A7B7C4000000000000000"
+    }
+  },
+  "nonce": "0x0",
+  "timestamp": "0x0",
+  "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "gasLimit": "0x4000000000000",
+  "difficulty": "0x0",
+  "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "coinbase": "0x0000000000000000000000000000000000000000",
+  "number": "0x0",
+  "gasUsed": "0x0",
+  "receiptTrie": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "stateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "transactionsTrie": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "receiptsRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "miner": "0x0000000000000000000000000000000000000000"
+}

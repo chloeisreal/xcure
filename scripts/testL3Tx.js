@@ -1,10 +1,17 @@
 const { ethers } = require("ethers");
+require("dotenv").config();
 
 async function main() {
+  const privateKey = process.env.DEPLOYER_PRIVATE_KEY;
+  if (!privateKey) {
+    console.error("Error: Set DEPLOYER_PRIVATE_KEY in .env");
+    process.exit(1);
+  }
+
   console.log("Testing simple transfer on L3...");
   
-  const provider = new ethers.JsonRpcProvider("http://127.0.0.1:3347");
-  const wallet = new ethers.Wallet("0xecdf21cb41c65afb51f91df408b7656e2c8739a5877f2814add0afd780cc210e", provider);
+  const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8449");
+  const wallet = new ethers.Wallet(privateKey, provider);
   
   // Send 0.01 ETH to itself (test transaction)
   const tx = {

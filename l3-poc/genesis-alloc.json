@@ -1,0 +1,17 @@
+{
+  "nextBlockNumber": 0,
+  "addressTableContents": [],
+  "retryableData": [],
+  "accounts": [
+    {
+      "addr": "0x44d710446f919e2c5d0e23b0d48ef5d6fec2289e",
+      "nonce": 0,
+      "ethBalance": "0x64A7B7C4000000000000000",
+      "contractInfo": null,
+      "aggregatorInfo": null,
+      "aggregatorToPay": "0x0000000000000000000000000000000000000000",
+      "classicHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "chainOwner": "0x44d710446f919e2c5d0e23b0d48ef5d6fec2289e"
+}

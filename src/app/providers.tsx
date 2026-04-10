@@ -7,13 +7,13 @@ import { arbitrumSepolia, type Chain } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "@rainbow-me/rainbowkit/styles.css";
 
-// Hardhat local network — matches MetaMask "Add Network" settings
-const hardhatLocal: Chain = {
-  id: 31337,
-  name: "Hardhat Local",
+// xCure Network L3 - dev chain
+const xCureL3: Chain = {
+  id: 412346,
+  name: "xCure Network",
   nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
   rpcUrls: {
-    default: { http: ["http://127.0.0.1:8545"] },
+    default: { http: ["http://127.0.0.1:8449"] },
   },
   testnet: true,
 };
@@ -21,7 +21,7 @@ const hardhatLocal: Chain = {
 const config = getDefaultConfig({
   appName: "XCure",
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "xcure-placeholder",
-  chains: [hardhatLocal, arbitrumSepolia],
+  chains: [xCureL3, arbitrumSepolia],
   ssr: true,
 });
 

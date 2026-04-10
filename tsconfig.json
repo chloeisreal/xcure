@@ -37,6 +37,10 @@
   ],
   "exclude": [
     "node_modules",
-    "valuation-engine"
+    "valuation-engine",
+    "l3-poc",
+    "scripts",
+    "contracts",
+    "hardhat.config.js"
   ]
 }

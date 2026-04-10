@@ -1,4 +1,4 @@
-require("dotenv/config");
+require("dotenv").config({ path: "../.env" });
 require("@nomicfoundation/hardhat-toolbox");
 
 const config = {
@@ -13,25 +13,9 @@ const config = {
   },
 
   networks: {
-    local: {
-      url: "http://127.0.0.1:8547",
-      chainId: 412346,
-      accounts: [
-        "0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659",
-      ],
-    },
-
-    localL3: {
-      url: "http://127.0.0.1:3347",
-      chainId: 333333,
-      accounts: [
-        "0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659",
-      ],
-    },
-
     xCureL3: {
       url: process.env.L3_RPC || "http://127.0.0.1:8449",
-      chainId: parseInt(process.env.L3_CHAIN_ID) || 8937309580,
+      chainId: 412346,
       accounts: process.env.DEPLOYER_PRIVATE_KEY
         ? [process.env.DEPLOYER_PRIVATE_KEY]
         : [],

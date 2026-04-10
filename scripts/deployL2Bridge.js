@@ -1,25 +1,36 @@
+/**
+ * @deprecated Use l3-poc/contracts/scripts/deployL2Bridge.ts instead
+ */
+
 const { ethers } = require("ethers");
+require("dotenv").config();
 
 async function main() {
+  console.log("DEPRECATED: Use l3-poc/contracts/scripts/deployL2Bridge.ts");
+  
+  const privateKey = process.env.PRIVATE_KEY || process.env.DEPLOYER_PRIVATE_KEY;
+  if (!privateKey) {
+    console.error("Error: Set PRIVATE_KEY or DEPLOYER_PRIVATE_KEY in .env");
+    process.exit(1);
+  }
+
   console.log("Deploying L2Bridge to L2 (Sequencer)...");
   
   const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8547");
-  const wallet = new ethers.Wallet("0xecdf21cb41c65afb51f91df408b7656e2c8739a5877f2814add0afd780cc210e", provider);
+  const wallet = new ethers.Wallet(privateKey, provider);
   
   console.log("Deployer:", wallet.address);
   
-  const balance = await provider.getBalance(wallet.address);
-  console.log("Balance:", ethers.formatEther(balance), "ETH");
-  
   const fs = require("fs");
-  const artifact = JSON.parse(fs.readFileSync("./artifacts/contracts/SimpleBridge.sol/L2Bridge.json", "utf8"));
   
-  const factory = new ethers.ContractFactory(artifact.abi, artifact.bytecode, wallet);
-  const l2Bridge = await factory.deploy();
-  
-  console.log("Transaction hash:", l2Bridge.deploymentTransaction().hash);
-  const receipt = await l2Bridge.deploymentTransaction().wait();
-  console.log("L2Bridge deployed to:", l2Bridge.target);
+  try {
+    const artifact = JSON.parse(fs.readFileSync("./artifacts/contracts/SimpleBridge.sol/L2Bridge.json", "utf8"));
+    const factory = new ethers.ContractFactory(artifact.abi, artifact.bytecode, wallet);
+    const l2Bridge = await factory.deploy();
+    console.log("L2Bridge deployed to:", l2Bridge.target);
+  } catch (e) {
+    console.log("Error: Artifact not found");
+  }
 }
 
 main()
