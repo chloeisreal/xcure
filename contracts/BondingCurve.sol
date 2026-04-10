@@ -117,10 +117,12 @@ contract MemeToken is ERC20 {
         uint256 fee    = cureAmount * FEE_BPS / 10_000;
         uint256 cureIn = cureAmount - fee;
 
+        uint256 available = CURVE_SUPPLY - tokensSold;
+        if (available == 0) revert AlreadyGraduated(); // all tokens sold, should have graduated
+
         uint256 amount = _tokensForCure(cureIn);
         if (amount == 0) revert ZeroAmount();
 
-        uint256 available = CURVE_SUPPLY - tokensSold;
         if (amount > available) amount = available;
 
         if (amount < minTokens) revert SlippageExceeded();
@@ -138,10 +140,11 @@ contract MemeToken is ERC20 {
 
         emit Buy(msg.sender, amount, actualCost);
 
-        if (cureRaised >= GRAD_THRESHOLD) {
+        // Graduate when threshold is hit OR all curve supply is sold (prevents rounding-induced stuck state)
+        if (cureRaised >= GRAD_THRESHOLD || tokensSold >= CURVE_SUPPLY) {
             graduated = true;
             emit Graduated(cureRaised);
-            _graduateToUniswap();
+            try this._graduateToUniswap() {} catch {} // best-effort LP; graduation is not blocked
         }
     }
 
@@ -172,7 +175,9 @@ contract MemeToken is ERC20 {
 
     /// @dev Deposit all raised CURE + remaining curve tokens into a Uniswap V2 pool.
     ///      LP tokens are sent to address(0) — permanently locked.
-    function _graduateToUniswap() internal {
+    ///      Called via `try this._graduateToUniswap()` so failures don't block graduation.
+    function _graduateToUniswap() external {
+        require(msg.sender == address(this), "only self");
         uint256 cureAmt  = IERC20(cureToken).balanceOf(address(this));
         uint256 memeAmt  = balanceOf(address(this)); // remaining unsold curve tokens
 

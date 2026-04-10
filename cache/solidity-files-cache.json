@@ -454,8 +454,8 @@
       ]
     },
     "/Users/ziqi/xcure/contracts/BondingCurve.sol": {
-      "lastModificationDate": 1775567173837,
-      "contentHash": "99f4f53089b899d2a99b3fb823d18927",
+      "lastModificationDate": 1775825408811,
+      "contentHash": "7134bfeb19f996469b938bf521a1c23c",
       "sourceName": "contracts/BondingCurve.sol",
       "solcConfig": {
         "version": "0.8.20",
