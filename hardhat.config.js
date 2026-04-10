@@ -3,6 +3,8 @@ require("dotenv").config();
 
 const arbitrumSepoliaUrl = process.env.ARBITRUM_SEPOLIA_RPC;
 const privateKey = process.env.PRIVATE_KEY;
+const l3RpcUrl = process.env.L3_RPC || "http://127.0.0.1:8449";
+const l3PrivateKey = process.env.DEPLOYER_PRIVATE_KEY;
 
 module.exports = {
   solidity: "0.8.20",
@@ -14,9 +16,12 @@ module.exports = {
         accounts: [privateKey],
       },
     } : {}),
-    l3: {
-      url: "http://127.0.0.1:3347",
-      accounts: ["0xecdf21cb41c65afb51f91df408b7656e2c8739a5877f2814add0afd780cc210e"],
-    },
+    ...(l3RpcUrl && l3PrivateKey ? {
+      xCureL3: {
+        url: l3RpcUrl,
+        accounts: [l3PrivateKey],
+        chainId: 412346,
+      },
+    } : {}),
   },
 };

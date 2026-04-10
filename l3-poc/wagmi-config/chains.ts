@@ -12,25 +12,25 @@ import { injected } from "wagmi/connectors";
  */
 
 export const cureL3 = {
-  id: 333333,
-  name: "Cure L3 (Local)",
+  id: 169887786,
+  name: "xCure Network",
   nativeCurrency: {
-    name: "Cure",
-    symbol: "CURE",
+    name: "Ether",
+    symbol: "ETH",
     decimals: 18,
   },
   rpcUrls: {
     default: {
-      http: ["http://127.0.0.1:3347"],
+      http: ["http://127.0.0.1:8449"],
     },
     public: {
-      http: ["http://127.0.0.1:3347"],
+      http: ["http://127.0.0.1:8449"],
     },
   },
   blockExplorers: {
     default: {
-      name: "Cure Explorer",
-      url: "http://localhost:4000", // Blockscout if enabled
+      name: "xCure Explorer",
+      url: "http://localhost:4000",
     },
   },
   testnet: true,
@@ -79,7 +79,7 @@ export const wagmiConfig = createConfig({
   chains: [cureL3],
   connectors: [injected()],
   transports: {
-    [cureL3.id]: http("http://127.0.0.1:3347"),
+    [cureL3.id]: http("http://127.0.0.1:8449"),
   },
 });
 

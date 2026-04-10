@@ -1,35 +1,35 @@
-const { ethers } = require("ethers");
+/**
+ * @deprecated Use l3-poc/contracts/scripts/deployL3Bridge.ts instead
+ */
 
-const L2_BRIDGE = "0xac5bAd9b296B7F8D21B69a8A76aE0E7f619590e6";
+const { ethers } = require("ethers");
+require("dotenv").config();
 
 async function main() {
+  console.log("DEPRECATED: Use l3-poc/contracts/scripts/deployL3Bridge.ts");
+  
+  const privateKey = process.env.DEPLOYER_PRIVATE_KEY;
+  if (!privateKey) {
+    console.error("Error: Set DEPLOYER_PRIVATE_KEY in .env");
+    process.exit(1);
+  }
+
   console.log("Deploying EnhancedL3Bridge to L3...");
   
-  const provider = new ethers.JsonRpcProvider("http://127.0.0.1:3347");
-  const wallet = new ethers.Wallet("0xecdf21cb41c65afb51f91df408b7656e2c8739a5877f2814add0afd780cc210e", provider);
-  
-  // Get fresh nonce
-  const nonce = await provider.getTransactionCount(wallet.address);
-  console.log("Current nonce:", nonce);
+  const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8449");
+  const wallet = new ethers.Wallet(privateKey, provider);
   
   const fs = require("fs");
-  const artifact = JSON.parse(fs.readFileSync("./artifacts/contracts/EnhancedBridge.sol/EnhancedL3Bridge.json", "utf8"));
   
-  const factory = new ethers.ContractFactory(artifact.abi, artifact.bytecode, wallet);
-  const contract = await factory.deploy(L2_BRIDGE, { nonce });
-  await contract.deploymentTransaction().wait();
-  
-  console.log("EnhancedL3Bridge deployed to:", contract.target);
-  
-  // Add supported token on L3 (MockCURE - same address on L2/L3 for test)
-  const cureAddress = "0xf4d76f449E66c714105928f24bc9fD59692B1157";
-  const tx = await contract.addSupportedToken(cureAddress, { nonce: nonce + 1 });
-  await tx.wait();
-  console.log("Added MockCURE as supported token");
-  
-  console.log("\n=== Deployment Summary ===");
-  console.log("L2 Bridge: 0xac5bAd9b296B7F8D21B69a8A76aE0E7f619590e6");
-  console.log("L3 Bridge:", contract.target);
+  try {
+    const L2_BRIDGE = "0xF71C64F37A8AdA918b1fD7C7d9e3FC5aC6C813Ce";
+    const artifact = JSON.parse(fs.readFileSync("./artifacts/contracts/EnhancedBridge.sol/EnhancedL3Bridge.json", "utf8"));
+    const factory = new ethers.ContractFactory(artifact.abi, artifact.bytecode, wallet);
+    const contract = await factory.deploy(L2_BRIDGE);
+    console.log("EnhancedL3Bridge deployed to:", contract.target);
+  } catch (e) {
+    console.log("Error: Artifact not found");
+  }
 }
 
 main()
