@@ -275,5 +275,479 @@
       "竞争激烈"
     ],
     "lastUpdated": "2025-03-13"
+  },
+  {
+    "id": "ark",
+    "name": "Ark",
+    "nameEn": "Ark",
+    "hkexCode": "",
+    "exchange": "HKEX",
+    "listingType": "18A",
+    "sector": "biotech",
+    "subsector": "",
+    "filingDate": "2025",
+    "status": "Pending",
+    "financials": {
+      "revenueCurrency": "CNY",
+      "cash": 3712706400
+    },
+    "vibeScore": 7.4,
+    "cashRunway": {
+      "months": 40,
+      "status": "Healthy",
+      "currentCash": 3712706400,
+      "monthlyBurn": 92817660
+    },
+    "rdConcentration": 0.4,
+    "pipeline": [],
+    "risks": [],
+    "lastUpdated": "2026-04-15"
+  },
+  {
+    "id": "atom",
+    "name": "Atom",
+    "nameEn": "Atom",
+    "hkexCode": "",
+    "exchange": "HKEX",
+    "listingType": "18A",
+    "sector": "biotech",
+    "subsector": "",
+    "filingDate": "2025",
+    "status": "Pending",
+    "financials": {
+      "revenueCurrency": "CNY",
+      "cash": 3406767000
+    },
+    "vibeScore": 6.3,
+    "x_vibeReasoning": "Early-Stage: Weighted toward Talent (40%) and Cash (40%) | CMO Missing: -0.2 | Low R&D Focus: -0.5 (40% < 50%) | Red Ocean: -0.5 (competitive market, no moat) | Founder PhD: +1.0",
+    "cashRunway": {
+      "months": 40,
+      "status": "Healthy",
+      "currentCash": 3406767000,
+      "monthlyBurn": 85169175
+    },
+    "rdConcentration": 0.4,
+    "pipeline": [],
+    "risks": [],
+    "lastUpdated": "2026-04-15"
+  },
+  {
+    "id": "binhui",
+    "name": "Binhui",
+    "nameEn": "Binhui",
+    "hkexCode": "",
+    "exchange": "HKEX",
+    "listingType": "18A",
+    "sector": "biotech",
+    "subsector": "",
+    "filingDate": "2025",
+    "status": "Pending",
+    "financials": {
+      "revenueCurrency": "CNY",
+      "cash": 1682561400
+    },
+    "vibeScore": 2.4,
+    "x_vibeReasoning": "Early-Stage: Weighted toward Talent (40%) and Cash (40%) | CMO Missing: -0.2 | Low R&D Focus: -0.5 (40% < 50%) | CASH CRITICAL: Score halved (8.9 months) | Founder PhD: +1.0 | Near-term Catalyst: +0.5 (2025-2026 milestones)",
+    "cashRunway": {
+      "months": 8.9,
+      "status": "Critical",
+      "currentCash": 1682561400,
+      "monthlyBurn": 188500000
+    },
+    "rdConcentration": 0.4,
+    "pipeline": [],
+    "risks": [],
+    "lastUpdated": "2026-04-15"
+  },
+  {
+    "id": "biokin",
+    "name": "Biokin",
+    "nameEn": "Biokin",
+    "hkexCode": "",
+    "exchange": "HKEX",
+    "listingType": "18A",
+    "sector": "biotech",
+    "subsector": "",
+    "filingDate": "2025",
+    "status": "Pending",
+    "financials": {
+      "revenueCurrency": "CNY",
+      "cash": 7805421000
+    },
+    "vibeScore": 8,
+    "x_vibeReasoning": "Late-Stage: Weighted toward Pipeline (45%) and Strategic Validation (20%) | CMO Missing: -0.2 | Low R&D Focus: -0.5 (40% < 50%) | Founder PhD: +1.0 | Near-term Catalyst: +0.5 (2025-2026 milestones) | Family-controlled: -10%",
+    "cashRunway": {
+      "months": 32,
+      "status": "Healthy",
+      "currentCash": 7805421000,
+      "monthlyBurn": 243750000
+    },
+    "rdConcentration": 0.4,
+    "pipeline": [],
+    "risks": [],
+    "lastUpdated": "2026-04-15"
+  },
+  {
+    "id": "genor",
+    "name": "GENOR",
+    "nameEn": "GENOR",
+    "hkexCode": "",
+    "exchange": "HKEX",
+    "listingType": "18A",
+    "sector": "biotech",
+    "subsector": "",
+    "filingDate": "2025",
+    "status": "Pending",
+    "financials": {
+      "revenueCurrency": "CNY",
+      "cash": 832954340
+    },
+    "vibeScore": 4,
+    "x_vibeReasoning": "Late-Stage: Weighted toward Pipeline (45%) and Strategic Validation (20%) | CMO Missing: -0.2 | Low R&D Focus: -0.5 (40% < 50%)",
+    "cashRunway": {
+      "months": 13.2,
+      "status": "Critical",
+      "currentCash": 832954340,
+      "monthlyBurn": 62891033.333333336
+    },
+    "rdConcentration": 0.4,
+    "pipeline": [],
+    "risks": [],
+    "lastUpdated": "2026-04-15"
+  },
+  {
+    "id": "huilun",
+    "name": "Huilun",
+    "nameEn": "Huilun",
+    "hkexCode": "",
+    "exchange": "HKEX",
+    "listingType": "18A",
+    "sector": "biotech",
+    "subsector": "",
+    "filingDate": "2025",
+    "status": "Pending",
+    "financials": {
+      "revenueCurrency": "CNY",
+      "cash": 579127870
+    },
+    "vibeScore": 5.2,
+    "x_vibeReasoning": "Late-Stage: Weighted toward Pipeline (45%) and Strategic Validation (20%) | CMO Missing: -0.2 | Low R&D Focus: -0.5 (40% < 50%) | Founder PhD: +1.0 | Near-term Catalyst: +0.5 (2025-2026 milestones) | Commercial Ready: +1.0 (team of 1390) | Family-controlled: -10%",
+    "cashRunway": {
+      "months": 40,
+      "status": "Healthy",
+      "currentCash": 579127870,
+      "monthlyBurn": 14478196.75
+    },
+    "rdConcentration": 0.4,
+    "pipeline": [],
+    "risks": [],
+    "lastUpdated": "2026-04-15"
+  },
+  {
+    "id": "impact",
+    "name": "IMPACT",
+    "nameEn": "IMPACT",
+    "hkexCode": "",
+    "exchange": "HKEX",
+    "listingType": "18A",
+    "sector": "biotech",
+    "subsector": "",
+    "filingDate": "2025",
+    "status": "Pending",
+    "financials": {
+      "revenueCurrency": "CNY",
+      "cash": 2308020000
+    },
+    "vibeScore": 3.9,
+    "x_vibeReasoning": "Late-Stage: Weighted toward Pipeline (45%) and Strategic Validation (20%) | CMO Missing: -0.2 | Low R&D Focus: -0.5 (40% < 50%)",
+    "cashRunway": {
+      "months": 40,
+      "status": "Healthy",
+      "currentCash": 2308020000,
+      "monthlyBurn": 57700500
+    },
+    "rdConcentration": 0.4,
+    "pipeline": [],
+    "risks": [],
+    "lastUpdated": "2026-04-15"
+  },
+  {
+    "id": "immunofoco",
+    "name": "Immunofoco",
+    "nameEn": "Immunofoco",
+    "hkexCode": "",
+    "exchange": "HKEX",
+    "listingType": "18A",
+    "sector": "biotech",
+    "subsector": "",
+    "filingDate": "2025",
+    "status": "Pending",
+    "financials": {
+      "revenueCurrency": "CNY",
+      "cash": 2129400000
+    },
+    "vibeScore": 6.5,
+    "x_vibeReasoning": "Late-Stage: Weighted toward Pipeline (45%) and Strategic Validation (20%) | CMO Missing: -0.2 | Low R&D Focus: -0.5 (40% < 50%) | Founder PhD: +1.0",
+    "cashRunway": {
+      "months": 40,
+      "status": "Healthy",
+      "currentCash": 2129400000,
+      "monthlyBurn": 53235000
+    },
+    "rdConcentration": 0.4,
+    "pipeline": [],
+    "risks": [],
+    "lastUpdated": "2026-04-15"
+  },
+  {
+    "id": "longbio",
+    "name": "LongBio",
+    "nameEn": "LongBio",
+    "hkexCode": "",
+    "exchange": "HKEX",
+    "listingType": "18A",
+    "sector": "biotech",
+    "subsector": "",
+    "filingDate": "2025",
+    "status": "Pending",
+    "financials": {
+      "revenueCurrency": "CNY",
+      "cash": 738925200
+    },
+"vibeScore": 7.4,
+    "cashRunway": {
+      "months": 40,
+      "status": "Healthy",
+      "currentCash": 738925200,
+      "monthlyBurn": 18473130
+    },
+    "rdConcentration": 0.4,
+    "pipeline": [],
+    "risks": [],
+    "lastUpdated": "2026-04-15"
+  },
+  {
+    "id": "medcaptain",
+    "name": "Medcaptain",
+    "nameEn": "Medcaptain",
+    "hkexCode": "",
+    "exchange": "HKEX",
+    "listingType": "18A",
+    "sector": "biotech",
+    "subsector": "",
+    "filingDate": "2025",
+    "status": "Pending",
+    "financials": {
+      "revenueCurrency": "CNY",
+      "cash": 6412294200
+    },
+    "vibeScore": 5.5,
+    "x_vibeReasoning": "Early-Stage: Weighted toward Talent (40%) and Cash (40%) | CMO Missing: -0.2 | Low R&D Focus: -0.5 (40% < 50%) | Red Ocean: -0.5 (competitive market, no moat) | Founder PhD: +1.0 | Family-controlled: -10%",
+    "cashRunway": {
+      "months": 40,
+      "status": "Healthy",
+      "currentCash": 6412294200,
+      "monthlyBurn": 160307355
+    },
+    "rdConcentration": 0.4,
+    "pipeline": [],
+    "risks": [],
+    "lastUpdated": "2026-04-15"
+  },
+  {
+    "id": "micot",
+    "name": "Micot",
+    "nameEn": "Micot",
+    "hkexCode": "",
+    "exchange": "HKEX",
+    "listingType": "18A",
+    "sector": "biotech",
+    "subsector": "",
+    "filingDate": "2025",
+    "status": "Pending",
+    "financials": {
+      "revenueCurrency": "CNY",
+      "cash": 198995390
+    },
+    "vibeScore": 6.9,
+    "x_vibeReasoning": "Late-Stage: Weighted toward Pipeline (45%) and Strategic Validation (20%) | CMO Missing: -0.2 | Low R&D Focus: -0.5 (40% < 50%) | Founder PhD: +1.0 | Near-term Catalyst: +0.5 (2025-2026 milestones) | Family-controlled: -10%",
+    "cashRunway": {
+      "months": 40,
+      "status": "Healthy",
+      "currentCash": 198995390,
+      "monthlyBurn": 4974884.75
+    },
+    "rdConcentration": 0.4,
+    "pipeline": [],
+    "risks": [],
+    "lastUpdated": "2026-04-15"
+  },
+  {
+    "id": "protelight",
+    "name": "ProteLight",
+    "nameEn": "ProteLight",
+    "hkexCode": "",
+    "exchange": "HKEX",
+    "listingType": "18A",
+    "sector": "biotech",
+    "subsector": "",
+    "filingDate": "2025",
+    "status": "Pending",
+    "financials": {
+      "revenueCurrency": "CNY",
+      "cash": 58530070
+    },
+    "vibeScore": 5.9,
+    "x_vibeReasoning": "Late-Stage: Weighted toward Pipeline (45%) and Strategic Validation (20%) | CMO Missing: -0.2 | Low R&D Focus: -0.5 (40% < 50%) | Red Ocean: -0.5 (competitive market, no moat) | Commercial Ready: +1.0 (team of 415) | Family-controlled: -10%",
+    "cashRunway": {
+      "months": 40,
+      "status": "Healthy",
+      "currentCash": 58530070,
+      "monthlyBurn": 1463251.75
+    },
+    "rdConcentration": 0.4,
+    "pipeline": [],
+    "risks": [],
+    "lastUpdated": "2026-04-15"
+  },
+  {
+    "id": "sciwind",
+    "name": "Sciwind",
+    "nameEn": "Sciwind",
+    "hkexCode": "",
+    "exchange": "HKEX",
+    "listingType": "18A",
+    "sector": "biotech",
+    "subsector": "",
+    "filingDate": "2025",
+    "status": "Pending",
+    "financials": {
+      "revenueCurrency": "CNY",
+      "cash": 1341381960
+    },
+    "vibeScore": 8.6,
+    "x_vibeReasoning": "Late-Stage: Weighted toward Pipeline (45%) and Strategic Validation (20%) | CMO Missing: -0.2 | Low R&D Focus: -0.5 (40% < 50%) | Red Ocean: -0.5 (competitive market, no moat) | Founder PhD: +1.0 | Near-term Catalyst: +0.5 (2025-2026 milestones) | Family-controlled: -10%",
+    "cashRunway": {
+      "months": 40,
+      "status": "Healthy",
+      "currentCash": 1341381960,
+      "monthlyBurn": 33534549
+    },
+    "rdConcentration": 0.4,
+    "pipeline": [],
+    "risks": [],
+    "lastUpdated": "2026-04-15"
+  },
+  {
+    "id": "sirius",
+    "name": "Sirius",
+    "nameEn": "Sirius",
+    "hkexCode": "",
+    "exchange": "HKEX",
+    "listingType": "18A",
+    "sector": "biotech",
+    "subsector": "",
+    "filingDate": "2025",
+    "status": "Pending",
+    "financials": {
+      "revenueCurrency": "CNY",
+      "cash": 3595020000
+    },
+    "vibeScore": 6,
+    "x_vibeReasoning": "Early-Stage: Weighted toward Talent (40%) and Cash (40%) | CMO Missing: -0.2 | Low R&D Focus: -0.5 (40% < 50%) | Red Ocean: -0.5 (competitive market, no moat) | Founder PhD: +1.0 | Near-term Catalyst: +0.5 (2025-2026 milestones)",
+    "cashRunway": {
+      "months": 40,
+      "status": "Healthy",
+      "currentCash": 3595020000,
+      "monthlyBurn": 89875500
+    },
+    "rdConcentration": 0.4,
+    "pipeline": [],
+    "risks": [],
+    "lastUpdated": "2026-04-15"
+  },
+  {
+    "id": "tangji",
+    "name": "Tangji",
+    "nameEn": "Tangji",
+    "hkexCode": "",
+    "exchange": "HKEX",
+    "listingType": "18A",
+    "sector": "biotech",
+    "subsector": "",
+    "filingDate": "2025",
+    "status": "Pending",
+    "financials": {
+      "revenueCurrency": "CNY",
+      "cash": 205935600
+    },
+    "vibeScore": 6.2,
+    "x_vibeReasoning": "Early-Stage: Weighted toward Talent (40%) and Cash (40%) | CMO Missing: -0.2 | Low R&D Focus: -0.5 (40% < 50%) | Founder PhD: +1.0 | Near-term Catalyst: +0.5 (2025-2026 milestones)",
+    "cashRunway": {
+      "months": 40,
+      "status": "Healthy",
+      "currentCash": 205935600,
+      "monthlyBurn": 5148390
+    },
+    "rdConcentration": 0.4,
+    "pipeline": [],
+    "risks": [],
+    "lastUpdated": "2026-04-15"
+  },
+  {
+    "id": "vivavision",
+    "name": "VivaVision",
+    "nameEn": "VivaVision",
+    "hkexCode": "",
+    "exchange": "HKEX",
+    "listingType": "18A",
+    "sector": "biotech",
+    "subsector": "",
+    "filingDate": "2025",
+    "status": "Pending",
+    "financials": {
+      "revenueCurrency": "CNY",
+      "cash": 553129200
+    },
+    "vibeScore": 2.3,
+    "x_vibeReasoning": "Early-Stage: Weighted toward Talent (40%) and Cash (40%) | CMO Missing: -0.2 | Low R&D Focus: -0.5 (40% < 50%) | Red Ocean: -0.5 (competitive market, no moat) | CASH CRITICAL: Score halved (6.6 months) | Founder PhD: +1.0",
+    "cashRunway": {
+      "months": 6.6,
+      "status": "Critical",
+      "currentCash": 553129200,
+      "monthlyBurn": 83395000
+    },
+    "rdConcentration": 0.4,
+    "pipeline": [],
+    "risks": [],
+    "lastUpdated": "2026-04-15"
+  },
+  {
+    "id": "wehand",
+    "name": "Wehand",
+    "nameEn": "Wehand",
+    "hkexCode": "",
+    "exchange": "HKEX",
+    "listingType": "18A",
+    "sector": "biotech",
+    "subsector": "",
+    "filingDate": "2025",
+    "status": "Pending",
+    "financials": {
+      "revenueCurrency": "CNY",
+      "cash": 426648590
+    },
+    "vibeScore": 5.5,
+    "x_vibeReasoning": "Late-Stage: Weighted toward Pipeline (45%) and Strategic Validation (20%) | CMO Missing: -0.2 | Low R&D Focus: -0.5 (40% < 50%) | Founder PhD: +1.0 | Near-term Catalyst: +0.5 (2025-2026 milestones) | Commercial Ready: +1.0 (team of 324)",
+    "cashRunway": {
+      "months": 40,
+      "status": "Healthy",
+      "currentCash": 426648590,
+      "monthlyBurn": 10666214.75
+    },
+    "rdConcentration": 0.4,
+    "pipeline": [],
+    "risks": [],
+    "lastUpdated": "2026-04-15"
   }
 ]

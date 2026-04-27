@@ -2,6 +2,20 @@ import { NextRequest } from "next/server";
 import { cacheGet, cacheSet, cacheKey } from "@/lib/data/cache";
 
 const CACHE_TTL = 7200; // 2 hours
+const RATE_LIMIT_MAX = 50;
+const RATE_LIMIT_WINDOW = 3600;
+
+async function checkRateLimit(clientId: string): Promise<boolean> {
+  const key = cacheKey('ratelimit', clientId);
+  const count = await cacheGet<number>(key) || 0;
+  
+  if (count >= RATE_LIMIT_MAX) {
+    return false;
+  }
+  
+  await cacheSet(key, count + 1, RATE_LIMIT_WINDOW);
+  return true;
+}
 
 const PROMPT = (query: string) => `You are XCure, an expert biotech and DeSci AI investment analyst.
 Analyze the following project, company, or token: "${query}"
@@ -70,8 +84,23 @@ function createMockStream(text: string): ReadableStream {
 }
 
 export async function POST(req: NextRequest) {
+  const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() 
+    || req.headers.get('cf-connecting-ip') 
+    || 'unknown';
+  
+  const allowed = await checkRateLimit(clientIp);
+  if (!allowed) {
+    console.log('[analyze] Rate limit exceeded for:', clientIp);
+    return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+  
   const { query } = await req.json();
 
+  console.log('[analyze] Query:', query);
+  
   if (!query || typeof query !== "string") {
     return new Response(JSON.stringify({ error: "query is required" }), {
       status: 400,

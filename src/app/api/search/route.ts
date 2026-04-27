@@ -3,6 +3,7 @@ import { searchCompanies } from '@/lib/data/local';
 import { getQuote, getQuoteFromYahoo, getQuoteFromFMP } from '@/lib/data/stocks';
 import { getTokenPriceFromCoinGecko } from '@/lib/data/tokens';
 import { getRecentHKEXFilings } from '@/lib/data/hkex';
+import { searchCompany } from '@/lib/data/companies-api';
 import type { Quote } from '@/lib/data/types';
 import fs from 'fs';
 import path from 'path';
@@ -335,19 +336,38 @@ export async function GET(request: NextRequest): Promise<NextResponse<SearchResp
       }
     }
     
-    // If still no results, return error
-    if (results.length === 0) {
-      const error = {
-        code: 'NOT_FOUND',
-        message: `Company "${trimmed}" not found in local database or HKEX disclosure website.`
-      };
-      return NextResponse.json({
-        success: false,
-        data: [],
-        error,
-        meta: { query: trimmed, searchType: type }
-      }, { status: 404 });
-    }
+    // If still no results, try Companies API
+      if (results.length === 0) {
+        try {
+          const companyData = await searchCompany(trimmed);
+          if (companyData) {
+            results.push({
+              symbol: companyData.domain || companyData.name,
+              name: companyData.name,
+              nameEn: companyData.name,
+              type: 'company-name' as EntityType,
+              exchange: companyData.location || 'Unknown',
+              _score: 10,
+            });
+          }
+        } catch (e) {
+          console.error('[Companies API] search error:', e);
+        }
+      }
+      
+      // If still no results, return error
+      if (results.length === 0) {
+        const error = {
+          code: 'NOT_FOUND',
+          message: `Company "${trimmed}" not found. Try searching by ticker symbol or company name.`
+        };
+        return NextResponse.json({
+          success: false,
+          data: [],
+          error,
+          meta: { query: trimmed, searchType: type }
+        }, { status: 404 });
+      }
     
     return NextResponse.json({
       success: true,

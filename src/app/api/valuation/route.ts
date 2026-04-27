@@ -9,6 +9,22 @@ import { findProspectusPDF, getLocalProspectusPath } from '@/lib/data/prospectus
 import { extractProspectusWithAI } from '@/lib/prospectus/extractor';
 import type { ValuationRequest, CompanyType, Valuation, ClinicalPhase, CompanySector } from '@/lib/data/types';
 import type { ValuationResponse } from '@/lib/data/types';
+import { cacheGet, cacheSet, cacheKey } from '@/lib/data/cache';
+
+const RATE_LIMIT_MAX = 100;
+const RATE_LIMIT_WINDOW = 3600;
+
+async function checkRateLimit(clientId: string): Promise<boolean> {
+  const key = cacheKey('ratelimit', clientId);
+  const count = await cacheGet<number>(key) || 0;
+  
+  if (count >= RATE_LIMIT_MAX) {
+    return false;
+  }
+  
+  await cacheSet(key, count + 1, RATE_LIMIT_WINDOW);
+  return true;
+}
 
 type ExtractedTrial = {
   product: string;
@@ -27,6 +43,19 @@ function mapPhase(phase: string): ClinicalPhase {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse<ValuationResponse>> {
+  const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0].trim() 
+    || request.headers.get('cf-connecting-ip') 
+    || 'unknown';
+  
+  const allowed = await checkRateLimit(clientIp);
+  if (!allowed) {
+    return NextResponse.json({
+      success: false,
+      data: null,
+      error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Too many requests. Please try again later.' }
+    }, { status: 429 });
+  }
+  
   try {
     const body: ValuationRequest = await request.json();
     const { symbol, type = 'listed', methods = ['dcf', 'comps', 'rnpv', 'ai'], aiSummary = true } = body;
@@ -52,6 +81,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Valuation
     let cash = 0;
     let debt = 0;
     let revenueCurrency = 'CNY';
+    let vibeScore: number | undefined;
     
     if (type === 'listed') {
       const quote = await getQuote(symbol);
@@ -137,7 +167,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Valuation
       companyType = 'ipo';
       dataSources.push('local');
       
-      // Extract company sector and financials
+      // Extract company sector, financials, and vibe score
       companySector = (company as any).sector || 'biotech';
       financials = (company as any).financials;
       revenue = financials?.revenue || 0;
@@ -145,6 +175,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Valuation
       cash = financials?.cash || 0;
       debt = financials?.debt || 0;
       revenueCurrency = financials?.revenueCurrency || 'CNY';
+      vibeScore = (company as any).vibeScore;
 
       // Try to find and extract prospectus PDF for IPO companies
       const hkexCode = (company as any).hkexCode;
@@ -257,6 +288,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<Valuation
         type: companyType,
         currentPrice,
         currency: 'USD',
+        vibeScore: vibeScore || undefined,
+        // vibeReasoning removed - internal scoring methodology not exposed
         valuation,
         metadata: {
           timestamp: new Date().toISOString(),

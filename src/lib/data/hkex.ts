@@ -3,6 +3,8 @@ import type { IPOCompany, ClinicalTrial } from './types';
 
 const HKEX_SEARCH_URL = 'https://www1.hkexnews.hk/search';
 
+const ENABLE_HKEX_FETCH = process.env.ENABLE_HKEX_FETCH === 'true';
+
 interface HKEXFiling {
   stockCode: string;
   companyName: string;
@@ -13,6 +15,10 @@ interface HKEXFiling {
 }
 
 async function fetchHKEX(url: string): Promise<string> {
+  if (!ENABLE_HKEX_FETCH) {
+    return '';
+  }
+  
   const response = await fetch(url, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -34,6 +40,11 @@ export async function getRecentHKEXFilings(
   documentTypes: string[] = ['A1', 'A2', 'PROSP'],
   limit: number = 50
 ): Promise<HKEXFiling[]> {
+  if (!ENABLE_HKEX_FETCH) {
+    console.log('[HKEX] Fetch disabled. Set ENABLE_HKEX_FETCH=true to enable.');
+    return [];
+  }
+  
   const filings: HKEXFiling[] = [];
   
   for (const docType of documentTypes) {
@@ -50,7 +61,6 @@ export async function getRecentHKEXFilings(
       const nameMatch = html.match(/companyName["']?\s*:\s*["']([^"']+)/g);
       const dateMatch = html.match(/publishDate["']?\s*:\s*["']([\d-]+)/g);
       
-      // Try alternative patterns if main ones don't work
       const altCodeMatch = html.match(/"stockCode"\s*:\s*(\d{5})/g);
       const altNameMatch = html.match(/"companyName"\s*:\s*"([^"]+)"/g);
       
@@ -79,7 +89,6 @@ export async function getRecentHKEXFilings(
           }
         }
       } else if (altCodeMatch && altNameMatch) {
-        // Try alternative parsing
         for (const codeStr of altCodeMatch.slice(0, 10)) {
           const stockCode = codeStr.match(/\d{5}/)?.[0];
           if (stockCode) {
@@ -159,6 +168,10 @@ export async function getHKEXCompanyProspectus(stockCode: string): Promise<{
   useOfProceeds?: string[];
   riskFactors?: string[];
 } | null> {
+  if (!ENABLE_HKEX_FETCH) {
+    return null;
+  }
+  
   try {
     const url = `https://www1.hkexnews.hk/app/appnews/corpinfo/${stockCode}.html`;
     const html = await fetchHKEX(url);
@@ -186,7 +199,7 @@ function extractProspectusField(html: string, field: string): string {
 
 function extractProspectusList(html: string, field: string): string[] {
   const items: string[] = [];
-  const regex = new RegExp(`${field}[\\s\\S]*?<li>([\\u4e00-\\u9fa5a-zA-Z0-9]{2,100})`, 'gi');
+  const regex = new RegExp(`${field}[\\s\\S]*?<li>([\\u4e00-\u9fa5a-zA-Z0-9]{2,100})`, 'gi');
   let match;
   
   while ((match = regex.exec(html)) !== null && items.length < 10) {
@@ -199,6 +212,11 @@ function extractProspectusList(html: string, field: string): string[] {
 }
 
 export async function syncHKEXFilings(): Promise<number> {
+  if (!ENABLE_HKEX_FETCH) {
+    console.log('[HKEX] sync disabled. Set ENABLE_HKEX_FETCH=true to enable.');
+    return 0;
+  }
+  
   const cacheKeyName = cacheKey('hkex', 'filings');
   const cached = await cacheGet<HKEXFiling[]>(cacheKeyName);
   

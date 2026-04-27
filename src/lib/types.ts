@@ -172,6 +172,11 @@ export interface rNPVResult {
   pipelineValue: number;
   successProbability: number;
   trialContributions: Record<string, number>;
+  pipelineItems?: Array<{
+    product: string;
+    indication: string;
+    phase: string;
+  }>;
 }
 
 export interface AIResult {

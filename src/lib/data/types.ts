@@ -193,6 +193,11 @@ export interface rNPVResult {
   pipelineValue: number;
   successProbability: number;
   trialContributions: Record<string, number>;
+  pipelineItems?: Array<{
+    product: string;
+    indication: string;
+    phase: string;
+  }>;
 }
 
 export interface AIResult {
@@ -227,6 +232,7 @@ export interface ValuationResponse {
     type: CompanyType;
     currentPrice?: number;
     currency?: string;
+    vibeScore?: number;
     valuation: Valuation;
     metadata: {
       timestamp: string;

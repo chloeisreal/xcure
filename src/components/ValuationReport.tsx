@@ -37,7 +37,7 @@ interface Props {
 }
 
 export default function ValuationReport({ data, isLoading, loadingMethods = {} }: Props) {
-  const { valuation, currentPrice, name, nameEn, symbol, type } = data;
+  const { valuation, currentPrice, name, nameEn, symbol, type, vibeScore } = data;
   const displayName = nameEn || name;
 
   return (
@@ -57,6 +57,11 @@ export default function ValuationReport({ data, isLoading, loadingMethods = {} }
           <p className="text-sm text-slate-400">Current Price</p>
         </div>
       </div>
+
+      {/* Vibe Score (if available) */}
+      {vibeScore !== undefined && (
+        <VibeScoreCard score={vibeScore} isLoading={isLoading} />
+      )}
 
       {/* Valuation Methods Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -101,6 +106,49 @@ export default function ValuationReport({ data, isLoading, loadingMethods = {} }
       {/* Data Sources */}
       <div className="text-xs text-slate-500">
         Data sources: {data.metadata.dataSources.join(", ")}
+      </div>
+    </div>
+  );
+}
+
+function VibeScoreCard({ score, isLoading }: { 
+  score: number; 
+  isLoading?: boolean;
+}) {
+  const getScoreColor = (s: number): string => {
+    if (s >= 8) return "text-green-400";
+    if (s >= 6) return "text-emerald-400";
+    if (s >= 4) return "text-amber-400";
+    return "text-red-400";
+  };
+  
+  const getScoreBg = (s: number): string => {
+    if (s >= 8) return "bg-green-500/20 border-green-500/30";
+    if (s >= 6) return "bg-emerald-500/20 border-emerald-500/30";
+    if (s >= 4) return "bg-amber-500/20 border-amber-500/30";
+    return "bg-red-500/20 border-red-500/30";
+  };
+
+  if (isLoading) {
+    return (
+      <div className="rounded-xl border border-amber-500/30 bg-amber-900/10 p-5 animate-pulse">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-xl">🎯</span>
+          <h3 className="font-semibold text-white">Vibe Score</h3>
+        </div>
+        <div className="h-8 bg-amber-900/30 rounded w-24"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`rounded-xl border p-5 ${getScoreBg(score)}`}>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">🎯</span>
+          <h3 className="font-semibold text-white">Vibe Score</h3>
+        </div>
+        <span className={`text-2xl font-bold ${getScoreColor(score)}`}>{score.toFixed(1)}</span>
       </div>
     </div>
   );
@@ -200,6 +248,15 @@ function ValuationCard({
         <div className="mt-3 pt-3 border-t border-slate-700 text-xs text-slate-500 space-y-1">
           <p>Pipeline: {formatNumber(result.pipelineValue)}</p>
           <p>Success: {((result.successProbability || 0) * 100).toFixed(0)}%</p>
+          {title === "rNPV Pipeline" && 'pipelineItems' in result && result.pipelineItems && result.pipelineItems.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {result.pipelineItems.map((item, i) => (
+                <p key={i} className="text-slate-400">
+                  {item.product}: {item.indication || 'N/A'} ({item.phase})
+                </p>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -274,7 +331,7 @@ function AIResultCard({ result, isLoading, hasData }: {
 
         {result.summary && (
           <div className={`pt-3 border-t border-purple-500/20 ${isExpanded ? '' : 'max-h-20 overflow-hidden'}`}>
-            <p className={`text-xs text-slate-400 whitespace-pre-wrap ${isExpanded ? '' : 'line-clamp-3'}`}>{result.summary}</p>
+            <p className={`text-xs text-slate-400 whitespace-pre-wrap ${isExpanded ? '' : 'line-clamp-3'}`}>{result.summary.replace(/\\n/g, '\n')}</p>
           </div>
         )}
       </div>

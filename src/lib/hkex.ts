@@ -3,6 +3,8 @@ import type { IPOCompany, ClinicalTrial } from './types';
 
 const HKEX_SEARCH_URL = 'https://www1.hkexnews.hk/search';
 
+const ENABLE_HKEX_FETCH = process.env.ENABLE_HKEX_FETCH === 'true';
+
 interface HKEXFiling {
   stockCode: string;
   companyName: string;
@@ -13,6 +15,10 @@ interface HKEXFiling {
 }
 
 async function fetchHKEX(url: string): Promise<string> {
+  if (!ENABLE_HKEX_FETCH) {
+    return '';
+  }
+  
   const response = await fetch(url, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (compatible; XCure/1.0)',
@@ -21,7 +27,8 @@ async function fetchHKEX(url: string): Promise<string> {
   });
   
   if (!response.ok) {
-    throw new Error(`HKEX fetch error: ${response.status}`);
+    console.log(`HKEX fetch error: ${response.status}`);
+    return '';
   }
   
   return response.text();
@@ -31,12 +38,21 @@ export async function getRecentHKEXFilings(
   documentTypes: string[] = ['A1', 'A2', 'PROSP'],
   limit: number = 50
 ): Promise<HKEXFiling[]> {
+  if (!ENABLE_HKEX_FETCH) {
+    console.log('[HKEX] Fetch disabled. Set ENABLE_HKEX_FETCH=true to enable.');
+    return [];
+  }
+  
   const filings: HKEXFiling[] = [];
   
   for (const docType of documentTypes) {
     try {
       const url = `${HKEX_SEARCH_URL}/tips?s=1&c=${limit}&o=desc&sortBy=PUBLISH_DATE&docType=${docType}`;
       const html = await fetchHKEX(url);
+      
+      if (!html || html.length < 100) {
+        continue;
+      }
       
       const codeMatch = html.match(/stockCode["']?\s*:\s*["']?(\d+)/g);
       const nameMatch = html.match(/companyName["']?\s*:\s*["']([^"']+)/g);
@@ -82,7 +98,7 @@ export function createIPOCompanyFromHKEX(filing: HKEXFiling): Partial<IPOCompany
     hkexCode: filing.stockCode,
     exchange: 'HKEX',
     listingType: '18A',
-    sector: sector.category,
+    sector: (sector.category as any) || 'biotech',
     subsector: sector.subsector,
     filingDate: filing.publishDate,
     status: 'Pending',
@@ -124,51 +140,12 @@ function guessSector(companyName: string): { category: string; subsector: string
   return { category: '其他', subsector: '综合' };
 }
 
-export async function getHKEXCompanyProspectus(stockCode: string): Promise<{
-  description?: string;
-  useOfProceeds?: string[];
-  riskFactors?: string[];
-} | null> {
-  try {
-    const url = `https://www1.hkexnews.hk/app/appnews/corpinfo/${stockCode}.html`;
-    const html = await fetchHKEX(url);
-    
-    const description = extractProspectusField(html, '业务概要');
-    const useOfProceeds = extractProspectusList(html, '募资用途');
-    const risks = extractProspectusList(html, '风险因素');
-    
-    return {
-      description: description || undefined,
-      useOfProceeds: useOfProceeds.length > 0 ? useOfProceeds : undefined,
-      riskFactors: risks.length > 0 ? risks : undefined,
-    };
-  } catch (error) {
-    console.error('HKEX prospectus error:', error);
-    return null;
-  }
-}
-
-function extractProspectusField(html: string, field: string): string {
-  const regex = new RegExp(`${field}[\\s\\S]*?([\\u4e00-\\u9fa5a-zA-Z0-9]{10,200})`, 'i');
-  const match = html.match(regex);
-  return match?.[1] || '';
-}
-
-function extractProspectusList(html: string, field: string): string[] {
-  const items: string[] = [];
-  const regex = new RegExp(`${field}[\\s\\S]*?<li>([\\u4e00-\\u9fa5a-zA-Z0-9]{2,100})`, 'gi');
-  let match;
-  
-  while ((match = regex.exec(html)) !== null && items.length < 10) {
-    if (match[1]) {
-      items.push(match[1]);
-    }
-  }
-  
-  return items;
-}
-
 export async function syncHKEXFilings(): Promise<number> {
+  if (!ENABLE_HKEX_FETCH) {
+    console.log('[HKEX] sync disabled. Set ENABLE_HKEX_FETCH=true to enable.');
+    return 0;
+  }
+  
   const cacheKeyName = cacheKey('hkex', 'filings');
   const cached = await cacheGet<HKEXFiling[]>(cacheKeyName);
   

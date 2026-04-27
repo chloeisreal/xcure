@@ -25,9 +25,30 @@ const PEAK_SALES_ESTIMATES: Record<string, number> = {
   'default': 1000000000,
 };
 
-const PATENT_YEARS = 15;
+const INDICATION_MAP: Record<string, string> = {
+  '实体瘤': 'Solid Tumors',
+  '黑色素瘤': 'Melanoma',
+  '非小细胞肺癌': 'NSCLC',
+  '伤口愈合': 'Wound Healing',
+  '特发性肺纤维化': 'Idiopathic Pulmonary Fibrosis',
+  '肿瘤': 'Oncology',
+  '多种实体瘤': 'Multiple Solid Tumors',
+  '胃食管腺癌': 'Gastric/Esophageal Adenocarcinoma',
+  '胆道癌': 'Biliary Cancer',
+};
+
+function translateIndication(indication: string): string {
+  if (!indication) return indication;
+  if (INDICATION_MAP[indication]) return INDICATION_MAP[indication];
+  const parts = indication.split('/');
+  if (parts.length > 1) {
+    return parts.map(p => INDICATION_MAP[p.trim()] || p.trim()).join('/');
+  }
+  return indication;
+}
 const DISCOUNT_RATE = 0.12;
 const COMMERCIALIZATION_YEARS = 5;
+const PATENT_YEARS = 15;
 
 export const CURRENCY_TO_USD: Record<Currency, number> = {
   'USD': 1.0,
@@ -180,8 +201,16 @@ export function calculatePortfolioNPV(
   const upside = marketCap ? ((pipelineValue - marketCap) / marketCap) * 100 : 0;
 
   const trialContributions: Record<string, number> = {};
+  const pipelineItems: { product: string; indication: string; phase: string }[] = [];
+
   trialResults.forEach(r => {
     trialContributions[r.id] = r.riskAdjustedNPV;
+    const trial = trials[trialResults.indexOf(r)];
+    pipelineItems.push({
+      product: r.id,
+      indication: translateIndication(trial?.indication || ''),
+      phase: trial?.phase || '',
+    });
   });
 
   return {
@@ -191,6 +220,7 @@ export function calculatePortfolioNPV(
     pipelineValue: Math.round(pipelineValue),
     successProbability: Math.round(totalSuccessProbability * 100) / 100,
     trialContributions,
+    pipelineItems,
   };
 }
 

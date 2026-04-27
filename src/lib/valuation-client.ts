@@ -39,6 +39,12 @@ export interface rNPVResult {
   upside: string;
   pipelineValue: number;
   successProbability: number;
+  trialContributions?: Record<string, number>;
+  pipelineItems?: Array<{
+    product: string;
+    indication: string;
+    phase: string;
+  }>;
 }
 
 export interface AIResult {
@@ -56,6 +62,7 @@ export interface ValuationData {
   type: CompanyType;
   currentPrice?: number;
   currency: string;
+  vibeScore?: number;
   valuation: {
     dcf?: DCFResult;
     comps?: CompsResult;
